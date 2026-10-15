@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180-v4.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192-v4.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>ゆうパック・郵便料金</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ゆうパック">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0a2e">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; background: #0a0a2e; min-height: 100vh; }
+
+#viewport {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+#track {
+  display: flex;
+  width: 300%;
+  height: 100%;
+  transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+}
+.pg {
+  width: 33.3333%;
+  height: 100%;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+#page-menu    { background: #0a0a2e; }
+#page-yuupack { background: #e9ecef; }
+#page-yuubin  { background: #F2F2F7; }
+#page-kokusai { background: #f2f2f7; }
+#page-hikiuke { background: #f2f2f7; }
+
+.sh {
+  background: #0d1a3a; border-bottom: 2px solid #4a8fd4;
+  padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+  position: sticky; top: 0; z-index: 100;
+}
+.sh-back {
+  background: #1e3a6e; border: 2px solid #4a8fd4; border-radius: 6px;
+  color: #ffe44d; font-size: 13px; font-weight: 800; padding: 5px 10px;
+  cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0;
+  order: 2;
+}
+.sh-back:active { background: #2a4d8e; }
+.sh-title {
+  color: #ffe44d; font-size: 14px; font-weight: 800;
+  flex: 1; text-align: center; letter-spacing: 0.5px;
+  order: 1;
+}
+
+/* ===== MENU ===== */
+#menu-section {
+  background: #0a0a2e;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 62px 20px 20px;
+  position: relative; overflow: hidden;
+}
+#menu-section::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,0.02) 29px);
+  pointer-events: none;
+}
+.dq-stars { position: absolute; top:0;left:0;right:0;bottom:0; pointer-events:none; overflow:hidden; }
+.star { position:absolute; background:white; border-radius:50%; animation: twinkle 2s infinite alternate; }
+@keyframes twinkle { 0%{opacity:0.1} 100%{opacity:0.6} }
+.dq-title { color:#ffe44d; font-size:17px; font-weight:800; letter-spacing:2px; line-height:1.5; text-align:center; margin-bottom:6px; text-shadow:0 0 12px rgba(255,228,77,0.4); z-index:1; }
+.dq-subtitle { color:#aac4e0; font-size:12px; letter-spacing:2px; margin-bottom:28px; z-index:1; }
+.dq-window {
+  background:#0d1a3a; border:3px solid #4a8fd4; border-radius:8px; padding:8px 12px;
+  width:100%; max-width:380px;
+  box-shadow:inset 0 0 20px rgba(0,0,30,0.8), 0 0 0 1px #1e3a6e; z-index:1;
+}
+.dq-item { display:flex; align-items:center; padding:10px 12px; border-radius:4px; cursor:pointer; transition:background 0.05s; }
+.dq-item:hover, .dq-item.selected { background:rgba(74,143,212,0.2); }
+.dq-cursor { color:#ffe44d; font-size:14px; margin-right:10px; width:14px; display:inline-block; visibility:hidden; }
+.dq-item.selected .dq-cursor { visibility:visible; }
+.dq-icon { font-size:18px; margin-right:10px; width:24px; text-align:center; }
+.dq-item-text { flex:1; min-width:0; }
+.dq-item-name { color:#e8f0ff; font-size:15px; font-weight:800; display:block; letter-spacing:0.5px; }
+.dq-item-desc { color:#6a8fb0; font-size:11px; display:block; margin-top:1px; }
+.dq-item-arrow { color:#4a8fd4; font-size:12px; }
+.dq-divider { height:1px; background:#1e3a6e; margin:2px 0; }
+.dq-footer { margin-top:18px; color:#3a5a7a; font-size:11px; letter-spacing:1px; text-align:center; z-index:1; }
+.dq-press-btn {
+  margin-top:16px; z-index:1;
+  align-self: flex-end;
+  background:#1e3a6e; border:2px solid #4a8fd4; border-radius:6px;
+  color:#ffe44d; font-size:11px; font-weight:800; padding:6px 16px;
+  cursor:pointer; letter-spacing:1px; font-family:inherit; transition:background 0.1s;
+}
+.dq-press-btn:active { background:#2a4d8e; }
+
+/* === Claude Code のキャラクター（メニュー左上） === */
+.mascot-row { position: absolute; top: 8px; left: 24px; z-index: 2; display: flex; align-items: flex-end; }
+.cc-wrap { width: 62px; height: 46px; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-end; }
+.cc-mascot {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 46px; gap: 3px;
+  text-decoration: none;
+}
+/* 体の部分は歩く版と同じ 36×24px。右の約15pxはノートパソコンが出る場所 */
+.cc-mascot svg { width: 51px; height: 34.5px; shape-rendering: crispEdges; overflow: visible; }
+/* 中の絵は、下のスクリプト（ccTyping）で1コマずつ描いている */
+.cc-mascot .cc-label {
+  font-family: -apple-system, "Segoe UI", sans-serif; font-size: 7px; letter-spacing: 0.05em;
+  color: #d97757; opacity: 0.8; white-space: nowrap;
+}
+
+/* === GitHub のマーク（メイン左上、オレンジのキャラクターの右） ===
+   横には動かず、その場で：タコの足をゆらゆら・ときどき首をかしげる・ときどき目をパチッ。タップすると1回転 */
+.gh-mascot { --gh-disc: #e6edf3; --gh-cat: #0a0a2e; --gh-text: #c9d1d9; }
+.gh-wrap { width: 50px; height: 46px; flex-shrink: 0; display: flex; justify-content: center; align-items: flex-end; margin-right: 6px; }
+.gh-mascot { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 46px; gap: 3px; text-decoration: none; }
+.gh-mascot svg { width: 24px; height: 24px; overflow: visible; }
+.gh-label { font-family: -apple-system, "Segoe UI", sans-serif; font-size: 7px; letter-spacing: 0.05em; color: var(--gh-text); opacity: 0.8; white-space: nowrap; }
+.gh-disc, .gh-dot { fill: var(--gh-disc); }
+.gh-cat { fill: var(--gh-cat); }
+.gh-tail-line { fill: none; stroke: var(--gh-cat); stroke-width: 0.8; stroke-linecap: round; }
+.gh-all { transform-box: view-box; transform-origin: 8px 8px; }
+.gh-head { transform-box: view-box; transform-origin: 8px 10.4px; animation: gh-tilt 5s ease-in-out infinite; }
+.gh-tail { transform-box: view-box; transform-origin: 6.5px 12.35px; animation: gh-wag 1.4s ease-in-out infinite alternate; }
+.gh-eyes { fill: var(--gh-disc); transform-box: fill-box; transform-origin: center; animation: gh-wink 6s 2s infinite; }
+.gh-mascot.spin .gh-all { animation: gh-spin 0.7s cubic-bezier(0.34,1.4,0.64,1); }
+@keyframes gh-tilt { 0%,60%,100% { transform: rotate(0); } 68% { transform: rotate(-9deg); } 78% { transform: rotate(-9deg); } 86% { transform: rotate(6deg); } 92% { transform: rotate(0); } }
+@keyframes gh-wag { from { transform: rotate(-14deg); } to { transform: rotate(12deg); } }
+@keyframes gh-wink { 0%,88%,100% { transform: scaleY(0); } 90%,95% { transform: scaleY(1); } }
+@keyframes gh-spin { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(1.15); } 100% { transform: rotate(360deg) scale(1); } }
+
+/* ===== 1: ゆうパック ===== */
+.yuupack-inner { max-width:480px; margin:auto; background:white; padding:12px 16px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-top:10px; margin-bottom:10px; }
+.yuupack-inner h2 { color:#004098; margin-top:0; margin-bottom:8px; font-size:20px; border-bottom:2px solid #004098; padding-bottom:6px; text-align:center; }
+.yp-section { margin-top:10px; }
+.yp-title { font-weight:bold; display:block; margin-bottom:4px; color:#444; font-size:15px; }
+.yp-title-lg { font-size:18px; color:#222; margin-bottom:6px; }
+.yuupack-inner select { width:100%; padding:10px; font-size:19px; border:1px solid #ccc; border-radius:6px; background-color:#fafafa; font-weight:bold; cursor:pointer; }
+#yp-origin { background-color:#e6f2ff; border-color:#004098; color:#004098; font-weight:bold; }
+.yp-loc-group { display:flex; align-items:center; gap:6px; }
+.yp-loc-group select { flex:1; min-width:0; }
+.yp-arrow { font-size:20px; font-weight:bold; color:#004098; }
+.yp-opts { background:#f8f9fa; border:1px solid #dee2e6; padding:10px 12px; border-radius:4px; margin-top:4px; }
+.yp-chk-row { display:flex; align-items:center; margin-bottom:8px; flex-wrap:nowrap; }
+.yp-chk-row:last-child { margin-bottom:0; }
+.yp-chk-row input[type="checkbox"] { width:20px; height:20px; margin-right:6px; accent-color:#004098; flex-shrink:0; }
+.yp-chk-row label { font-size:15px; cursor:pointer; flex-grow:1; white-space:nowrap; letter-spacing:-0.6px; }
+.yp-ptag { color:#e60012; font-size:15px; font-weight:bold; white-space:nowrap; flex-shrink:0; }
+.yp-ptag-b { color:#004098; font-size:15px; font-weight:bold; white-space:nowrap; flex-shrink:0; }
+.yp-chk-row.disabled { opacity:0.4; pointer-events:none; }
+.yp-hr { margin:8px 0; border:none; border-top:1px dashed #ccc; }
+#yp-result-box { margin-top:12px; padding:12px; background-color:#f0f7ff; border-radius:6px; text-align:center; border:2px solid #cce5ff; }
+#yp-opts-label { font-size:13px; color:#004098; font-weight:bold; margin-bottom:6px; background:#fff; border:1px solid #004098; padding:2px 10px; border-radius:15px; display:none; line-height:1.3; }
+#yp-result { font-size:38px; font-weight:bold; color:#004098; margin-bottom:2px; }
+#yp-breakdown { font-size:14px; color:#555; margin-top:4px; line-height:1.3; }
+
+/* ===== 2: 郵便料金 ===== */
+.yb-wrap { padding:8px 10px; font-size:14px; color:#1C1C1E; }
+.yb-wrap h1 { font-size:18px; text-align:center; margin:4px 0 10px; color:#1C1C1E; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.yb-mail-icon { width:24px; height:24px; margin-right:6px; }
+.yb-card { background:#FFFFFF; padding:10px 14px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:10px; }
+.yb-card h2 { font-size:13px; margin:0 0 6px 0; color:#8E8E93; font-weight:bold; letter-spacing:0.5px; }
+.yb-sellabel { display:block; margin-bottom:6px; font-size:13.5px; font-weight:bold; }
+.yb-wrap select {
+  -webkit-appearance:none; appearance:none; width:100%; padding:9px 32px 9px 11px; margin-top:3px;
+  border:1px solid #E5E5EA; border-radius:8px; font-size:15.5px; background-color:#FAFAFC; outline:none; font-weight:bold;
+  background-image:url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2014%2010%22%3E%3Cpolygon%20fill%3D%22%238E8E93%22%20points%3D%227%2010%200%200%2014%200%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat:no-repeat; background-position:right 12px center; background-size:10px;
+}
+.yb-wrap select:focus { border-color:#007AFF; background-color:#FFF; }
+.yb-wrap select:disabled { background-color:#E5E5EA; opacity:1; }
+.ct-hagaki{color:#e60012!important} .ct-teikei{color:#007AFF!important} .ct-kikakunai{color:#FF9500!important} .ct-kikakugai{color:#AF52DE!important}
+.cw-light{color:#28A745!important} .cw-mid{color:#008080!important;font-weight:bold} .cw-heavy{color:#FF3B30!important;font-weight:bold} .cw-dis{color:#8E8E93!important}
+.yb-res-box { padding:9px 14px; background:linear-gradient(135deg,#007AFF,#0056D2); color:white; border-radius:12px; box-shadow:0 4px 12px rgba(0,122,255,0.3); margin-bottom:10px; display:flex; flex-direction:row; align-items:center; gap:8px; }
+.yb-res-label { font-size:16px; font-weight:800; color:rgba(255,255,255,0.95); white-space:nowrap; flex-shrink:0; }
+.yb-price { flex:1; font-size:27px; font-weight:800; text-shadow:0 2px 4px rgba(0,0,0,0.2); letter-spacing:-1px; line-height:1.1; text-align:center; white-space:nowrap; }
+.yb-bkdn { flex:1; min-width:0; font-size:10.5px; color:rgba(255,255,255,0.85); font-weight:500; line-height:1.5; word-break:break-all; text-align:right; }
+.yb-err { color:#FF3B30; font-size:14px; font-weight:bold; background:rgba(255,255,255,0.9); padding:4px 10px; border-radius:6px; display:inline-block; }
+.c-sokutatsu{color:#FF6B6B;font-weight:bold} .c-tokutei{color:#0056D2;font-weight:bold} .c-kani{color:#E3000F;font-weight:bold} .c-genkin{color:#28A745;font-weight:bold} .c-normal{font-weight:bold;color:#1C1C1E}
+.pt2{color:#8E8E93;font-size:12px;font-weight:normal}
+.yb-wrap input[type="checkbox"],.yb-wrap input[type="radio"]{ width:18px;height:18px;accent-color:#007AFF;margin-left:4px;margin-right:10px; }
+.radio-label { display:flex; align-items:center; padding:7px 0; border-bottom:1px solid #F2F2F7; font-size:14.5px; }
+.radio-label:last-child { border-bottom:none; padding-bottom:0; }
+.input-yoshogaku { background:#F2F2F7; padding:12px; border-radius:10px; margin-top:8px; display:none; }
+.input-row { display:flex; align-items:center; justify-content:flex-end; font-size:14px; font-weight:bold; margin-bottom:8px; }
+.input-yoshogaku input { width:110px; padding:7px; font-size:16px; font-weight:bold; border:2px solid #007AFF; border-radius:6px; text-align:right; margin:0 8px; background:#FFF; color:#1C1C1E; }
+.calc-rule-text { font-size:13px; color:#1C1C1E; font-weight:bold; text-align:right; background:#E5E5EA; padding:8px; border-radius:6px; margin-top:8px; margin-bottom:4px; }
+.calc-rule-note { font-size:11px; color:#8E8E93; text-align:right; margin-bottom:8px; }
+.custom-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.custom-keypad button { background:#FFFFFF; border:1px solid #D1D1D6; box-shadow:0 1px 2px rgba(0,0,0,0.1); border-radius:6px; padding:9px; font-size:16px; font-weight:bold; color:#1C1C1E; touch-action:manipulation; }
+.custom-keypad button:active { background:#E5E5EA; }
+.custom-keypad .btn-clear { background:#FF3B30; color:#FFF; border:none; line-height:1.1; }
+.custom-keypad .btn-clear:active { background:#D70015; }
+
+/* ===== 3: 国際郵便 ===== */
+.k-box { background:#fff; color:#1c1c1e; border-radius:12px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1); max-width:400px; margin:0 auto; }
+.k-box h2 { font-size:1.2rem; text-align:center; color:#e60012; border-bottom:2px solid #e60012; padding-bottom:10px; margin-bottom:20px; }
+.k-box label { font-size:0.85rem; font-weight:bold; margin-top:15px; display:block; color:#3a3a3c; }
+.k-box select,.k-box input { width:100%; padding:15px 12px; margin-top:8px; border:1px solid #d1d1d6; border-radius:8px; font-size:1.1rem; font-weight:bold; color:#1c1c1e; background-color:#fafafa; }
+.k-box select { -webkit-appearance:none; appearance:none; background-image:url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat:no-repeat; background-position:right 15px top 50%; background-size:12px auto; }
+.k-input-group { display:flex; gap:8px; margin-top:8px; }
+.k-input-group input { margin-top:0; flex:1; min-width:0; }
+.k-btn-mic { width:56px; flex-shrink:0; background:#e60012; color:#fff; border:none; border-radius:8px; font-size:1.5rem; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:manipulation; }
+.k-btn-mic:active { transform:translateY(2px); }
+.k-btn-mic.listening { background:#ff3b30; animation:k-pulse 1s ease-in-out infinite; }
+@keyframes k-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,59,48,0.6)} 50%{box-shadow:0 0 0 8px rgba(255,59,48,0)} }
+.k-voice { margin-top:8px; font-size:0.85rem; color:#3a3a3c; background:#eef6ff; border-radius:8px; padding:8px 10px; display:none; line-height:1.4; }
+.k-hint { margin-top:6px; font-size:0.72rem; color:#8e8e93; }
+.k-btn-clear { width:70px; flex-shrink:0; background-color:#e5e5ea; color:#3a3a3c; border:none; border-radius:8px; font-size:0.95rem; font-weight:bold; cursor:pointer; }
+.k-btn-calc { width:100%; margin-top:20px; background-color:#e60012; color:white; border:none; padding:16px; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; }
+.k-btn-calc:active { transform:translateY(2px); }
+#k-resultArea { margin-top:25px; padding:15px; background-color:#fff9fa; border:2px solid #e60012; border-radius:10px; display:none; }
+.k-range-box { background:#e60012; color:white; text-align:center; padding:8px; border-radius:6px; font-size:0.95rem; font-weight:bold; margin-bottom:10px; }
+.k-res-row { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px; }
+.k-res-label { font-size:0.85rem; color:#666; flex-shrink:0; }
+.k-res-val { font-weight:bold; font-size:1.1rem; text-align:right; min-width:0; }
+.k-price-box { display:flex; align-items:center; justify-content:center; gap:15px; margin-top:5px; background:#fff; padding:10px; border-radius:8px; }
+.k-price-lbl { font-size:1.1rem; font-weight:bold; color:#333; }
+.k-price-val { font-size:2.2rem; font-weight:bold; color:#e60012; }
+.k-msg { margin-top:12px; padding:10px; border-radius:8px; background:#fff3f3; color:#c62828; font-weight:bold; font-size:0.95rem; text-align:center; display:none; }
+
+/* ===== 4: 引受条件 ===== */
+.h-wrap { padding:20px 15px; color:#1c1c1e; }
+.h-wrap h2 { text-align:center; font-size:20px; color:#1c1c1e; margin-bottom:20px; }
+.h-card { background-color:#ffffff; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); margin-bottom:15px; }
+.h-card label { display:block; font-size:14px; font-weight:bold; margin-bottom:10px; color:#666; }
+.h-sel-wrap { position:relative; width:100%; }
+.h-sel-wrap select { width:100%; padding:16px 40px 16px 16px; font-size:18px; font-weight:bold; border:2px solid #007aff; border-radius:12px; background:#fff; color:#1c1c1e; appearance:none; -webkit-appearance:none; cursor:pointer; }
+.h-sel-wrap::after { content:'▼'; position:absolute; top:50%; right:15px; transform:translateY(-50%); color:#007aff; pointer-events:none; font-size:14px; }
+.h-helper { font-size:12.5px; color:#333; margin-top:12px; line-height:1.5; -webkit-text-size-adjust:100%; }
+#h-resultArea { display:none; margin-top:20px; }
+.h-ctitle { font-size:26px; font-weight:bold; text-align:center; color:#1c1c1e; margin-bottom:5px; }
+.h-badge { display:inline-block; font-size:12px; padding:4px 10px; border-radius:12px; margin-bottom:15px; text-align:center; font-weight:bold; }
+.h-badge-ex { background-color:#ff9800; color:white; }
+.h-badge-std { background-color:#4caf50; color:white; }
+.h-mcard { border-radius:10px; padding:15px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); position:relative; overflow:hidden; }
+.h-ems { background-color:#fff3e0; border-left:5px solid #ff9800; }
+.h-ems .h-mtitle { color:#ef6c00; }
+.h-air { background-color:#e3f2fd; border-left:5px solid #1976d2; }
+.h-air .h-mtitle { color:#1976d2; }
+.h-surf { background-color:#e8f5e9; border-left:5px solid #388e3c; }
+.h-surf .h-mtitle { color:#388e3c; }
+.h-mtitle { font-size:18px; font-weight:bold; margin-bottom:10px; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:5px; }
+.h-drow { display:flex; justify-content:space-between; margin-bottom:6px; font-size:15px; }
+.h-dlabel { color:#555; }
+.h-dval { font-weight:bold; color:#000; font-size:17px; }
+.h-stop-ov { position:absolute; top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.85); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; color:#d32f2f; z-index:10; }
+.h-note { font-size:12px; color:#666; margin-top:15px; text-align:center; background:#e5e5ea; padding:10px; border-radius:8px; }
+@keyframes h-fadeInUp { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+.h-fade { animation:h-fadeInUp 0.4s ease-out forwards 1; }
+.h-links { display:flex; flex-direction:column; gap:12px; align-items:center; margin-top:25px; }
+.h-link { display:inline-block; color:white; padding:14px 24px; border-radius:25px; text-decoration:none; font-weight:bold; font-size:15px; width:85%; text-align:center; }
+.h-link-ems { background-color:#ff9800; }
+.h-link-air { background-color:#1976d2; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+/* キャラクターの下の「Claude Code」「GitHub」の文字を太く */
+.cc-label, .gh-label, .op-c > span { font-weight: 700 !important; }
+/* 夜にキャラクターを起こすボタン（自己紹介の画面・小さな起こす画面） */
+#ccIntro .ccx-wake { background: #d97757; color: #fff; border: none; }
+#ccIntro .ccx-wake[hidden], #ccWakePop[hidden] { display: none !important; }
+#ccWakePop { position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; padding: 20px; }
+#ccWakePop .ccw-box { background: #0b1120; border: 3px double #f8f8f8; border-radius: 6px; padding: 16px; max-width: 300px; color: #f8f8f8; font: 700 14px/1.7 -apple-system, 'Hiragino Sans', sans-serif; text-align: center; }
+#ccWakePop .ccw-btns { display: flex; gap: 8px; margin-top: 12px; }
+#ccWakePop button { flex: 1; padding: 10px; border-radius: 10px; border: none; font: inherit; cursor: pointer; }
+#ccWakePop .ccw-wake { background: #d97757; color: #fff; }
+#ccWakePop .ccw-close { background: #f8f8f8; color: #0b1120; }
+</style>
+</head>
+<body>
+<!-- ===== キャラクターの自己紹介（左上の Claude Code と GitHub のマークをタップすると出る。cc-intro） ===== -->
+<style>
+  #ccIntro {
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  }
+  #ccIntro.show { display: flex; animation: ccIntroFade 0.2s; }
+  @keyframes ccIntroFade { from { opacity: 0; } to { opacity: 1; } }
+  #ccIntro .ccx-box {
+    width: 100%; max-width: 330px; box-sizing: border-box;
+    background: #0b1120; border: 3px double #f8f8f8; border-radius: 6px;
+    padding: 18px 16px 14px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  #ccIntro .ccx-pic { height: 104px; display: none; align-items: flex-end; justify-content: center; margin-bottom: 8px; }
+  #ccIntro .ccx-box[data-who="cc"] .ccx-pic-cc, #ccIntro .ccx-box[data-who="gh"] .ccx-pic-gh { display: flex; }
+  #ccIntro .ccx-pic-cc svg { width: 153px; height: 103.5px; shape-rendering: crispEdges; overflow: visible; }
+  #ccIntro .ccx-pic .gh-mascot { --gh-disc: #e6edf3; --gh-cat: #0b1120; height: auto; display: block; }
+  #ccIntro .ccx-pic .gh-mascot svg { width: 88px; height: 88px; overflow: visible; }
+  #ccIntro .ccx-name { font-size: 17px; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
+  #ccIntro .ccx-box[data-who="cc"] .ccx-name { color: #d97757; }
+  #ccIntro .ccx-box[data-who="gh"] .ccx-name { color: #e6edf3; }
+  #ccIntro .ccx-msg {
+    text-align: left; min-height: 8.8em; box-sizing: border-box;
+    background: #000; border: 2px solid #475569; border-radius: 4px;
+    padding: 10px 12px;
+    color: #f8f8f8; font-size: 14px; font-weight: 700; line-height: 1.75;
+    white-space: pre-line;
+  }
+  #ccIntro .ccx-actions { display: flex; gap: 8px; margin-top: 12px; }
+  #ccIntro .ccx-btn {
+    flex: 1; padding: 11px 8px; border-radius: 10px; box-sizing: border-box;
+    font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ccIntro .ccx-link { background: rgba(51, 65, 85, 0.6); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+  #ccIntro .ccx-close { background: #f8f8f8; color: #0b1120; border: none; }
+  #ccIntro .ccx-btn:active { transform: scale(0.97); }
+</style>
+<div id="ccIntro">
+  <div class="ccx-box" data-who="cc">
+    <div class="ccx-pic ccx-pic-cc"><svg class="cc-anim" viewBox="0 -7 34 23" aria-hidden="true"></svg></div>
+    <div class="ccx-pic ccx-pic-gh"><span class="gh-mascot">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <defs><clipPath id="ghClipIntro"><circle cx="8" cy="8" r="8"/></clipPath></defs>
+          <g class="gh-all">
+            <circle class="gh-disc" cx="8" cy="8" r="8"/>
+            <g clip-path="url(#ghClipIntro)">
+              <path class="gh-cat" d="M6.75 10.3 C6.45 10.7 6.3 11.2 6.3 11.8 L6.3 15.1 Q6.3 15.6 6.8 15.6 L9.2 15.6 Q9.7 15.6 9.7 15.1 L9.7 11.8 C9.7 11.2 9.55 10.7 9.25 10.3 Z"/>
+              <g class="gh-head">
+                <path class="gh-cat" d="M4.15 4.75 C3.85 3.85 3.95 2.85 4.3 2.1 C4.3 2.1 5.05 1.95 6.35 2.9 C6.9 2.75 7.45 2.68 8 2.68 C8.55 2.68 9.1 2.75 9.65 2.9 C10.95 1.95 11.7 2.1 11.7 2.1 C12.05 2.85 12.15 3.85 11.85 4.75 C12.4 5.3 12.75 6.0 12.75 6.95 C12.75 9.75 10.95 10.45 8 10.55 C5.05 10.45 3.25 9.75 3.25 6.95 C3.25 6.0 3.6 5.3 4.15 4.75 Z"/>
+                <rect class="gh-eyes" x="5.5" y="6.1" width="1" height="1.5" rx="0.5"/>
+                <rect class="gh-eyes" x="9.5" y="6.1" width="1" height="1.5" rx="0.5"/>
+              </g>
+              <g class="gh-tail">
+                <path class="gh-tail-line" d="M6.5 12.35 C5.3 12.55 4.65 12.0 4.25 11.25 C3.95 10.7 3.6 10.35 3.0 10.25"/>
+                <circle class="gh-dot" cx="5.5" cy="12.2" r="0.17"/>
+                <circle class="gh-dot" cx="4.75" cy="11.75" r="0.17"/>
+                <circle class="gh-dot" cx="4.25" cy="11.05" r="0.17"/>
+                <circle class="gh-dot" cx="3.7" cy="10.5" r="0.17"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+    </span></div>
+    <div class="ccx-name"></div>
+    <div class="ccx-msg"></div>
+    <div class="ccx-actions">
+      <a class="ccx-btn ccx-link" href="#" target="_blank" rel="noopener">公式ページを見る</a>
+      <button type="button" class="ccx-btn ccx-wake" hidden>おこす</button>
+      <button type="button" class="ccx-btn ccx-close">とじる</button>
+    </div>
+  </div>
+</div>
+<!-- ===== ここまで キャラクターの自己紹介 ===== -->
+
+<div id="viewport">
+<div id="track">
+
+<div class="pg" id="page-menu">
+  <div id="menu-section">
+    <div class="dq-stars" id="dq-stars"></div>
+    <div class="mascot-row">
+    <div class="cc-wrap">
+    <a class="cc-mascot" href="https://claude.com/claude-code" target="_blank" rel="noopener" title="Claude Code で作成" aria-label="Claude Code で作成">
+      <!-- パソコンを打つキャラクター（1マス＝半ドット。中の絵は下のスクリプト ccTyping が描く） -->
+      <svg class="cc-anim" viewBox="0 -7 34 23" aria-hidden="true"></svg>
+      <span class="cc-label">Claude Code</span>
+    </a>
+    </div>
+    <div class="gh-wrap">
+      <a class="gh-mascot" href="https://github.com/aaiuioo-maker/yuupack-yuubin" target="_blank" rel="noopener" title="GitHub で公開" aria-label="GitHub で公開">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <defs><clipPath id="ghClip"><circle cx="8" cy="8" r="8"/></clipPath></defs>
+          <g class="gh-all">
+            <circle class="gh-disc" cx="8" cy="8" r="8"/>
+            <g clip-path="url(#ghClip)">
+              <path class="gh-cat" d="M6.75 10.3 C6.45 10.7 6.3 11.2 6.3 11.8 L6.3 15.1 Q6.3 15.6 6.8 15.6 L9.2 15.6 Q9.7 15.6 9.7 15.1 L9.7 11.8 C9.7 11.2 9.55 10.7 9.25 10.3 Z"/>
+              <g class="gh-head">
+                <path class="gh-cat" d="M4.15 4.75 C3.85 3.85 3.95 2.85 4.3 2.1 C4.3 2.1 5.05 1.95 6.35 2.9 C6.9 2.75 7.45 2.68 8 2.68 C8.55 2.68 9.1 2.75 9.65 2.9 C10.95 1.95 11.7 2.1 11.7 2.1 C12.05 2.85 12.15 3.85 11.85 4.75 C12.4 5.3 12.75 6.0 12.75 6.95 C12.75 9.75 10.95 10.45 8 10.55 C5.05 10.45 3.25 9.75 3.25 6.95 C3.25 6.0 3.6 5.3 4.15 4.75 Z"/>
+                <rect class="gh-eyes" x="5.5" y="6.1" width="1" height="1.5" rx="0.5"/>
+                <rect class="gh-eyes" x="9.5" y="6.1" width="1" height="1.5" rx="0.5"/>
+              </g>
+              <g class="gh-tail">
+                <path class="gh-tail-line" d="M6.5 12.35 C5.3 12.55 4.65 12.0 4.25 11.25 C3.95 10.7 3.6 10.35 3.0 10.25"/>
+                <circle class="gh-dot" cx="5.5" cy="12.2" r="0.17"/>
+                <circle class="gh-dot" cx="4.75" cy="11.75" r="0.17"/>
+                <circle class="gh-dot" cx="4.25" cy="11.05" r="0.17"/>
+                <circle class="gh-dot" cx="3.7" cy="10.5" r="0.17"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+        <span class="gh-label">GitHub</span>
+      </a>
+    </div>
+    </div>
+    <div class="dq-title">★ ゆうパック・郵便料金 ★</div>
+    <div class="dq-subtitle">— POSTAL CALCULATOR —</div>
+    <div class="dq-window">
+      <div class="dq-item selected" data-idx="0" onclick="menuSelect(0)">
+        <span class="dq-cursor">▶</span><span class="dq-icon">📦</span>
+        <span class="dq-item-text"><span class="dq-item-name">ゆうパック料金計算</span><span class="dq-item-desc">京都発 全国・チルド対応</span></span>
+        <span class="dq-item-arrow">▷</span>
+      </div>
+      <div class="dq-divider"></div>
+      <div class="dq-item" data-idx="1" onclick="menuSelect(1)">
+        <span class="dq-cursor">▶</span><span class="dq-icon">✉</span>
+        <span class="dq-item-text"><span class="dq-item-name">郵便料金計算</span><span class="dq-item-desc">定形・定形外・速達・書留</span></span>
+        <span class="dq-item-arrow">▷</span>
+      </div>
+    </div>
+    <div class="dq-footer">タップして ひらく</div>
+  </div>
+</div>
+
+<div class="pg" id="page-yuupack">
+  <div class="sh">
+    <button class="sh-back" onclick="goToMenu()">≡ メニュー</button>
+    <span class="sh-title">📦 ゆうパック料金計算</span>
+  </div>
+  <div style="padding:10px;">
+  <div class="yuupack-inner">
+    <h2>ゆうパック料金計算</h2>
+    <div style="text-align:center;font-size:11px;color:#004098;font-weight:bold;margin:-4px 0 4px;">10月1日改定料金 対応版（近畿発）</div>
+    <div class="yp-section">
+      <label class="yp-title yp-title-lg" id="yp-location-label">発送元(固定) → 宛先</label>
+      <div class="yp-loc-group">
+        <select id="yp-origin"></select>
+        <span class="yp-arrow">→</span>
+        <select id="yp-destination" onchange="ypHandleLogic('update')"></select>
+      </div>
+    </div>
+    <div class="yp-section">
+      <label class="yp-title yp-title-lg">サイズ</label>
+      <select id="yp-size" onchange="ypHandleLogic('size')">
+        <option value="60" style="color:#2E7D32;">60サイズ</option>
+        <option value="80" style="color:#2E7D32;">80サイズ</option>
+        <option value="100" style="color:#E65100;">100サイズ</option>
+        <option value="120" style="color:#E65100;">120サイズ</option>
+        <option value="140" style="color:#C62828;">140サイズ</option>
+        <option value="150" style="color:#004098;font-weight:bold;">150サイズ (チルド上限)</option>
+        <option value="160" style="color:#C62828;">160サイズ</option>
+        <option value="170" style="color:#C62828;">170サイズ</option>
+      </select>
+    </div>
+    <div class="yp-section">
+      <label class="yp-title">オプション・割引</label>
+      <div class="yp-opts">
+        <div class="yp-chk-row">
+          <input type="checkbox" id="yp-chk-multi" onchange="ypHandleLogic('multiple')">
+          <label for="yp-chk-multi">同一あて先・複数口割引</label>
+          <span class="yp-ptag">-60円</span>
+        </div>
+        <div class="yp-chk-row">
+          <input type="checkbox" id="yp-chk-carry" onchange="ypHandleLogic('carryin')">
+          <label for="yp-chk-carry">持込割引</label>
+          <span class="yp-ptag">-120円</span>
+        </div>
+        <hr class="yp-hr">
+        <div class="yp-chk-row" id="yp-grp-chilled">
+          <input type="checkbox" id="yp-chk-chilled" onchange="ypHandleLogic('chilled')">
+          <label for="yp-chk-chilled" style="color:#004098;font-weight:bold;">チルドゆうパック</label>
+          <span class="yp-ptag-b">サイズ別加算</span>
+        </div>
+        <div class="yp-chk-row" id="yp-grp-weight">
+          <input type="checkbox" id="yp-chk-weight" onchange="ypHandleLogic('weight')">
+          <label for="yp-chk-weight">重量ゆうパック (25〜30kg)</label>
+          <span class="yp-ptag">+620円</span>
+        </div>
+      </div>
+    </div>
+    <div id="yp-result-box">
+      <div id="yp-opts-label"></div>
+      <div id="yp-result">840 円</div>
+      <div id="yp-breakdown">基本運賃: 840円</div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div class="pg" id="page-yuubin">
+  <div class="sh">
+    <button class="sh-back" onclick="goToMenu()">≡ メニュー</button>
+    <span class="sh-title">✉ 郵便料金計算</span>
+  </div>
+  <div class="yb-wrap">
+    <h1>
+      <svg class="yb-mail-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="fg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#E1B382"/><stop offset="100%" stop-color="#C89666"/></linearGradient><linearGradient id="bg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C89666"/><stop offset="100%" stop-color="#9E734B"/></linearGradient></defs>
+        <path d="M2 8 C2 6.9 2.9 6 4 6 H20 C21.1 6 22 6.9 22 8 V18 C22 19.1 21.1 20 20 20 H4 C2.9 20 2 19.1 2 18 V8 Z" fill="url(#bg2)"/>
+        <path d="M2 8 L12 14.5 L22 8 V18 C22 19.1 21.1 20 20 20 H4 C2.9 20 2 19.1 2 18 V8 Z" fill="#B07D54"/>
+        <path d="M2 8 L12 14.5 L22 8 C22 6.9 21.1 6 20 6 H4 C2.9 6 2 6.9 2 8 Z" fill="url(#fg2)"/>
+        <path d="M2 8 L12 14.5 L22 8" stroke="#8A5A33" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      郵便料金計算
+      <svg width="22" height="18" viewBox="0 0 22 18" xmlns="http://www.w3.org/2000/svg" style="margin-left:6px;flex-shrink:0;">
+        <rect x="0" y="0" width="22" height="18" rx="2" fill="#e60012"/>
+        <rect x="0" y="0" width="22" height="18" rx="2" fill="none" stroke="#ff4444" stroke-width="1"/>
+        <line x1="0" y1="6" x2="22" y2="6" stroke="#ff7777" stroke-width="1"/>
+        <line x1="6" y1="6" x2="6" y2="18" stroke="#ff7777" stroke-width="1"/>
+        <rect x="8" y="8" width="10" height="2" rx="1" fill="#ffaaaa"/>
+        <rect x="8" y="12" width="7" height="1.5" rx="0.7" fill="#ff9999"/>
+      </svg>
+    </h1>
+    <div class="yb-card">
+      <h2>郵便物の情報</h2>
+      <label class="yb-sellabel">種類
+        <select id="yb-mailType" class="ct-teikei" onchange="ybSelChange()">
+          <option value="teikei">定形郵便</option>
+          <option value="kikakunai">定形外 (規格内)</option>
+          <option value="kikakugai">定形外 (規格外)</option>
+        </select>
+      </label>
+      <label class="yb-sellabel">重さ
+        <select id="yb-weight" class="cw-light" onchange="ybSelChange()">
+          <option value="50">50gまで</option>
+          <option value="100">100gまで</option>
+          <option value="150">150gまで</option>
+          <option value="250">250gまで</option>
+          <option value="500">500gまで</option>
+          <option value="1000">1kgまで</option>
+          <option value="2000">2kgまで</option>
+          <option value="4000">4kgまで</option>
+        </select>
+      </label>
+    </div>
+    <div class="yb-res-box">
+      <div class="yb-res-label">合計金額</div>
+      <div id="yb-result" class="yb-price">110 円</div>
+      <div id="yb-breakdown" class="yb-bkdn">基本 110円</div>
+    </div>
+    <div class="yb-card">
+      <h2>特殊取扱</h2>
+      <label class="radio-label" style="border-bottom:1px solid #E5E5EA;padding-bottom:12px;margin-bottom:4px;">
+        <input type="checkbox" id="yb-sokutatsu" onchange="ybChkChange()">
+        <span class="c-sokutatsu">速達 <span class="pt2" id="yb-sokuLabel">(自動計算)</span></span>
+      </label>
+      <h2 style="margin-top:12px;">記録・書留（1つのみ選択）</h2>
+      <label class="radio-label"><input type="radio" name="yb-kk" value="none" onchange="ybChkChange()" checked><span class="c-normal">なし</span></label>
+      <label class="radio-label"><input type="radio" name="yb-kk" value="tokutei" onchange="ybChkChange()"><span class="c-tokutei">特定記録 <span class="pt2">(+210円)</span></span></label>
+      <label class="radio-label"><input type="radio" name="yb-kk" value="kani" onchange="ybChkChange()"><span class="c-kani">簡易書留 <span class="pt2">(+350円)</span></span></label>
+      <label class="radio-label"><input type="radio" name="yb-kk" value="ippan" onchange="ybChkChange()"><span class="c-normal">一般書留 <span class="pt2">(+480円)</span></span></label>
+      <label class="radio-label" style="border-bottom:none;"><input type="radio" name="yb-kk" value="genkin" onchange="ybChkChange()"><span class="c-genkin">現金書留 <span class="pt2">(+480円〜、金額指定)</span></span></label>
+      <div id="yb-yoshodiv" class="input-yoshogaku">
+        <div class="input-row">送金額: <input type="text" id="yb-yosho" value="10000" readonly> 円</div>
+        <div class="custom-keypad">
+          <button type="button" onclick="ybNum('1')">1</button><button type="button" onclick="ybNum('2')">2</button><button type="button" onclick="ybNum('3')">3</button>
+          <button type="button" onclick="ybNum('4')">4</button><button type="button" onclick="ybNum('5')">5</button><button type="button" onclick="ybNum('6')">6</button>
+          <button type="button" onclick="ybNum('7')">7</button><button type="button" onclick="ybNum('8')">8</button><button type="button" onclick="ybNum('9')">9</button>
+          <button type="button" class="btn-clear" onclick="ybClear()">C<br><span style="font-size:11px;font-weight:normal;">(クリア)</span></button>
+          <button type="button" onclick="ybNum('0')">0</button><button type="button" onclick="ybNum('00')">00</button>
+        </div>
+        <div id="yb-genkinbox" style="display:none;">
+          <div class="calc-rule-text" id="yb-genkintext">基本 480円</div>
+          <div class="calc-rule-note">※1万円まで480円、以降5,000円ごとに＋11円加算</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+var menuSel = 0;
+var toolInited = {yuupack:false, yuubin:false, kokusai:false, hikiuke:false};
+
+function goToPage(idx) {
+  document.getElementById('track').style.transform = 'translateX(-'+(idx*33.3333)+'%)';
+  setTimeout(function(){
+    var ids=['page-menu','page-yuupack','page-yuubin'];
+    var p=document.getElementById(ids[idx]);
+    if(p) p.scrollTop=0;
+  },50);
+}
+
+function goToMenu() { sndCancel(); goToPage(0); }
+
+// タップした項目にカーソルを動かして、そのまま開く（決定ボタンなし）
+var menuOpening=false;
+function menuSelect(idx) {
+  if(menuOpening) return;
+  var items=document.querySelectorAll('.dq-item');
+  items[menuSel].classList.remove('selected');
+  menuSel=idx;
+  items[menuSel].classList.add('selected');
+  menuOpening=true;
+  menuDecide();
+  setTimeout(function(){ menuOpening=false; },400);
+}
+
+function menuDecide() {
+  sndDecide();
+  var ids=['yuupack','yuubin'];
+  var id=ids[menuSel];
+  setTimeout(function(){
+    if(!toolInited[id]){
+      if(id==='yuupack') ypInit();
+      if(id==='yuubin') ybCalc();
+      if(id==='kokusai') kColor();
+      if(id==='hikiuke') hInit();
+      toolInited[id]=true;
+    }
+    goToPage(menuSel+1);
+  },300);
+}
+
+// ===== AUDIO ENGINE =====
+let audioCtx;
+function getAC(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq,type,dur,vol,delay){
+  try{
+    const ctx=getAC(), now=ctx.currentTime+(delay||0);
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type=type||'square'; osc.frequency.value=freq;
+    g.gain.setValueAtTime(vol||0.04,now);
+    g.gain.exponentialRampToValueAtTime(0.001,now+dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(now); osc.stop(now+dur);
+  }catch(e){}
+}
+function sndCursor(){ tone(440,'square',0.07,0.04,0); tone(660,'square',0.07,0.03,0.06); }
+function sndDecide(){ [[523,0],[659,0.08],[784,0.16],[1047,0.24]].forEach(([f,d])=>tone(f,'square',0.15,0.05,d)); }
+function sndCancel(){ tone(330,'square',0.05,0.04,0); tone(220,'square',0.12,0.04,0.055); }
+function sndSelect(){ tone(880,'square',0.1,0.05,0); tone(880,'square',0.1,0.05,0.1); }
+function sndCoin(){ tone(1046.5,'sine',0.3,0.05,0); tone(1318.5,'sine',0.25,0.04,0.05); }
+function sndDiscount(){ [[1046.5,0],[1318.5,0.06],[1568,0.12]].forEach(([f,d])=>tone(f,'sine',0.2,0.04,d)); }
+function sndCalc(){ [[523,0],[659,0.05],[784,0.1],[1047,0.15]].forEach(([f,d])=>tone(f,'square',0.15,0.05,d)); }
+function sndClear(){ tone(200,'square',0.05,0.04,0); tone(120,'square',0.12,0.04,0.055); }
+function sndError(){ tone(150,'sawtooth',0.3,0.05,0); }
+function sndYbSel(){ tone(880,'square',0.1,0.05,0); tone(880,'square',0.1,0.05,0.1); }
+function sndYbChk(){ tone(660,'square',0.07,0.05,0); tone(880,'square',0.07,0.04,0.05); }
+function sndYbNum(){ tone(500,'triangle',0.05,0.08,0); }
+function sndHSelect(){ tone(880,'square',0.1,0.04,0); }
+
+// ===== MENU 星 =====
+(()=>{
+  const el=document.getElementById('dq-stars');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*2+1;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s;`;
+    el.appendChild(s);
+  }
+})();
+
+// ===== ゆうパック =====
+const ypPG=[
+  {label:"北海道",prefs:["北海道"],color:"#006080"},
+  {label:"東北",prefs:["青森県","岩手県","宮城県","秋田県","山形県","福島県"],color:"#2E7D32"},
+  {label:"関東",prefs:["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","山梨県"],color:"#1565C0"},
+  {label:"信越",prefs:["新潟県","長野県"],color:"#795548"},
+  {label:"北陸",prefs:["富山県","石川県","福井県"],color:"#00838F"},
+  {label:"東海",prefs:["岐阜県","静岡県","愛知県","三重県"],color:"#E65100"},
+  {label:"府内",prefs:["京都府"],color:"#004098"},
+  {label:"近畿",prefs:["滋賀県","大阪府","兵庫県","奈良県","和歌山県"],color:"#004098"},
+  {label:"中国",prefs:["鳥取県","島根県","岡山県","広島県","山口県"],color:"#C62828"},
+  {label:"四国",prefs:["徳島県","香川県","愛媛県","高知県"],color:"#F57C00"},
+  {label:"九州",prefs:["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県"],color:"#6A1B9A"},
+  {label:"沖縄",prefs:["沖縄県"],color:"#D81B60"}
+];
+// 2025年10月1日改定 近畿(京都)発 基本運賃 [60,80,100,120,140,160,170] ※早見表(持込割引後)+120円
+const ypRates={"Local":[840,1150,1480,1810,2160,2500,3060],"Zone1":[970,1320,1650,2010,2600,3000,3680],"Zone2":[1090,1440,1780,2130,2760,3130,4500],"Zone3":[1270,1580,1960,2290,2930,3300,4670],"Hokkaido":[1910,2240,2590,2920,3610,4000,6040],"Okinawa":[1600,1990,2480,2860,3430,3820,5870]};
+const ypSzIdx={"60":0,"80":1,"100":2,"120":3,"140":4,"150":5,"160":5,"170":6};
+const ypChilled={"60":225,"80":360,"100":675,"120":675,"140":1330,"150":2100};
+let ypLastPrice=0;
+function ypTier(ri,pref){
+  if(pref==="京都府") return "Local";
+  if(ri===0) return "Hokkaido"; if(ri===11) return "Okinawa";
+  if(ri===1) return "Zone3"; if(ri===2||ri===3||ri===10) return "Zone2";
+  return "Zone1";
+}
+function ypInit(){
+  const orig=document.getElementById('yp-origin');
+  const dest=document.getElementById('yp-destination');
+  const o=document.createElement('option'); o.value='6_京都府'; o.text='京都府'; o.selected=true; orig.appendChild(o); orig.disabled=true;
+  ypPG.forEach((g,ri)=>{
+    const og=document.createElement('optgroup'); og.label=g.label; og.style.color=g.color;
+    g.prefs.forEach(p=>{
+      const op=document.createElement('option'); op.value=`${ri}_${p}`; op.text=p; op.style.color=g.color;
+      if(p==="京都府") op.selected=true; og.appendChild(op);
+    }); dest.appendChild(og);
+  });
+  ypHandleLogic('init');
+}
+function ypHandleLogic(id){
+  if(id!=='init') sndSelect();
+  const dest=document.getElementById('yp-destination');
+  const size=document.getElementById('yp-size');
+  if(id==='update'||id==='init'){
+    dest.style.color=dest.options[dest.selectedIndex].style.color;
+    const dp=dest.value.split("_");
+    document.getElementById("yp-location-label").innerText=`発送元(固定) → 宛先 (${ypPG[parseInt(dp[0])].label})`;
+  }
+  size.style.color=size.options[size.selectedIndex].style.color;
+  const sz=size.value;
+  const chk=document.getElementById("yp-chk-chilled");
+  const wt=document.getElementById("yp-chk-weight");
+  const gc=document.getElementById("yp-grp-chilled");
+  if(sz==="160"||sz==="170"){if(chk.checked){chk.checked=false;sndError();}chk.disabled=true;gc.classList.add("disabled");}
+  else{chk.disabled=false;gc.classList.remove("disabled");}
+  if(id==='chilled'&&chk.checked) wt.checked=false;
+  if(id==='weight'&&wt.checked) chk.checked=false;
+  ypCalc(id);
+}
+function ypCalc(id){
+  const dp=document.getElementById("yp-destination").value.split("_");
+  const ri=parseInt(dp[0]); const pref=dp[1];
+  const sz=document.getElementById("yp-size").value;
+  const base=ypRates[ypTier(ri,pref)][ypSzIdx[sz]];
+  let final=base; let bd=`基本運賃: ${base.toLocaleString()}円`;
+  const isCh=document.getElementById("yp-chk-chilled").checked;
+  const isWt=document.getElementById("yp-chk-weight").checked;
+  const isCa=document.getElementById("yp-chk-carry").checked;
+  const isMu=document.getElementById("yp-chk-multi").checked;
+  let opts=[];
+  if(isMu){final-=60;bd+=`<br>- 複数/同一割引: 60円`;opts.push("同一あて先・複数口割引");}
+  if(isCa){final-=120;bd+=`<br>- 持込割引: 120円`;opts.push("持込割引");}
+  if(isCh){final+=ypChilled[sz];bd+=`<br>+ チルド加算: ${ypChilled[sz].toLocaleString()}円`;opts.push("チルドゆうパック");}
+  if(isWt){final+=620;bd+=`<br>+ 重量加算: 620円`;opts.push("重量ゆうパック");}
+  document.getElementById("yp-result").innerText=`${final.toLocaleString()} 円`;
+  document.getElementById("yp-breakdown").innerHTML=bd;
+  const ol=document.getElementById("yp-opts-label");
+  if(opts.length>0){ol.innerHTML=opts.join("<br> ＋ ");ol.style.display="inline-block";}else{ol.style.display="none";}
+  if(id!=='init'&&ypLastPrice!==0&&final!==ypLastPrice){if(final<ypLastPrice)sndDiscount();else sndCoin();}
+  ypLastPrice=final;
+}
+
+// ===== 郵便料金 =====
+let ybLastKK='none'; let ybErrPlayed=false;
+function ybSelChange(){ sndYbSel(); ybCalc(); }
+function ybChkChange(){ sndYbChk(); ybCalc(); }
+function ybNum(n){
+  sndYbNum();
+  const inp=document.getElementById('yb-yosho');
+  inp.value=(inp.value==='0')?(n==='00'?'0':n):inp.value+n;
+  ybCalc();
+}
+function ybClear(){ sndClear(); document.getElementById('yb-yosho').value='0'; ybCalc(); }
+function ybCalc(){
+  const te=document.getElementById('yb-mailType');
+  const we=document.getElementById('yb-weight');
+  const rd=document.getElementById('yb-result');
+  const bd=document.getElementById('yb-breakdown');
+  const sl=document.getElementById('yb-sokuLabel');
+  const type=te.value;
+  te.className='';
+  te.classList.add(type==='teikei'?'ct-teikei':type==='kikakunai'?'ct-kikakunai':'ct-kikakugai');
+  if(type==='teikei'){we.value='50';we.disabled=true;}else{we.disabled=false;}
+  const w=parseFloat(we.value);
+  we.className='';
+  if(we.disabled)we.classList.add('cw-dis');
+  else if(w<=100)we.classList.add('cw-light');
+  else if(w<=500)we.classList.add('cw-mid');
+  else we.classList.add('cw-heavy');
+  let base=0,err=''; const parts=[];
+  if(type==='teikei'){if(w<=50)base=110;else err='定形郵便は50gまで';}
+  else if(type==='kikakunai'){
+    if(w<=50)base=140;else if(w<=100)base=180;else if(w<=150)base=270;
+    else if(w<=250)base=320;else if(w<=500)base=510;else if(w<=1000)base=750;
+    else err='規格内は1kgまで';
+  }else{
+    if(w<=50)base=260;else if(w<=100)base=290;else if(w<=150)base=390;
+    else if(w<=250)base=450;else if(w<=500)base=660;else if(w<=1000)base=920;
+    else if(w<=2000)base=1350;else if(w<=4000)base=1750;
+  }
+  if(base>0)parts.push('基本 '+base+'円');
+  let opt=0;
+  if(document.getElementById('yb-sokutatsu').checked){
+    let sp,sd;
+    if(w<=250){sp=300;sd='250gまで +300円';}else if(w<=1000){sp=400;sd='1kgまで +400円';}else{sp=690;sd='4kgまで +690円';}
+    opt+=sp;parts.push('速達 '+sp+'円');sl.innerText='('+sd+')';sl.style.color='#FF6B6B';
+  }else{sl.innerText='(自動計算)';sl.style.color='#8E8E93';}
+  const kk=document.querySelector('input[name="yb-kk"]:checked').value;
+  const yd=document.getElementById('yb-yoshodiv');
+  const gb=document.getElementById('yb-genkinbox');
+  const gt=document.getElementById('yb-genkintext');
+  if(kk==='genkin'&&ybLastKK!=='genkin')document.getElementById('yb-yosho').value='10000';
+  ybLastKK=kk;
+  const yo=parseFloat(document.getElementById('yb-yosho').value)||0;
+  yd.style.display=(kk==='genkin')?'block':'none';
+  gb.style.display=(kk==='genkin')?'block':'none';
+  if(kk==='tokutei'){opt+=210;parts.push('特定記録 210円');}
+  else if(kk==='kani'){opt+=350;parts.push('簡易書留 350円');}
+  else if(kk==='ippan'){opt+=480;parts.push('一般書留 480円');}
+  else if(kk==='genkin'){
+    if(yo>500000){err='現金書留の上限は50万円までです';gt.innerText='上限オーバー';gt.style.color='#FF3B30';}
+    else{
+      let add=0;if(yo>10000)add=Math.ceil((yo-10000)/5000)*11;
+      const tot=480+add;
+      gt.innerText=add>0?'基本 480円 ＋ 加算 '+add+'円 ＝ '+tot+'円':'基本 480円（加算なし）＝ '+tot+'円';
+      gt.style.color='#1C1C1E';opt+=tot;parts.push('現金書留 '+tot+'円');
+    }
+  }
+  if(err!==''){
+    if(!ybErrPlayed){sndError();ybErrPlayed=true;}
+    rd.innerHTML='<span class="yb-err">'+err+'</span>';
+    bd.innerText='エラーを確認してください';return;
+  }
+  ybErrPlayed=false;
+  const total=base+opt;
+  rd.innerText=total.toLocaleString()+' 円';
+  bd.innerText=parts.join(' ＋ ');
+}
+
+// ===== 国際郵便 =====
+function kColor(){
+  const m=document.getElementById('k-method');
+  m.style.backgroundColor=m.value==='ems'?'#ffeed0':m.value==='air'?'#dff4ff':'#e2f5e2';
+}
+function kMsg(t){
+  const el=document.getElementById('k-msg');
+  if(t){el.innerText=t;el.style.display='block';}else{el.style.display='none';}
+}
+function kClear(){ sndClear(); kStopVoice(); document.getElementById('k-weight').value=''; document.getElementById('k-resultArea').style.display='none'; kMsg(''); kVoiceMsg(''); }
+
+// ===== 重さの読み取り（キーボード・音声 共通）=====
+// 例: "1240" "1,240g" "1240グラム" "1.2キロ" "1.2kg" "2キロ300グラム" "千二百四十グラム"
+function kKanjiToNum(str){
+  const d={'〇':0,'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+  return str.replace(/[〇零一二三四五六七八九十百千万]+/g,function(k){
+    let total=0,sec=0,cur=0;
+    for(const ch of k){
+      if(ch in d){cur=cur*10+d[ch];}
+      else if(ch==='十'){sec+=(cur||1)*10;cur=0;}
+      else if(ch==='百'){sec+=(cur||1)*100;cur=0;}
+      else if(ch==='千'){sec+=(cur||1)*1000;cur=0;}
+      else if(ch==='万'){total+=(sec+cur||1)*10000;sec=0;cur=0;}
+    }
+    return String(total+sec+cur);
+  });
+}
+function kParseWeight(raw){
+  if(!raw) return NaN;
+  let t=String(raw).normalize('NFKC').toLowerCase();
+  t=t.replace(/[,，、\s]/g,'').replace(/点/g,'.').replace(/てん/g,'.');
+  t=kKanjiToNum(t);
+  t=t.replace(/キログラム|キロ|きろ|㎏|kg/g,'K').replace(/グラム|ぐらむ|㌘|g/g,'G');
+  let m=t.match(/(\d+(?:\.\d+)?)K(?:(\d+)G?)?/);
+  if(m) return Math.round(parseFloat(m[1])*1000+(m[2]?parseInt(m[2]):0));
+  m=t.match(/(\d+(?:\.\d+)?)G?/);
+  if(m) return Math.round(parseFloat(m[1]));
+  return NaN;
+}
+
+// ===== 音声入力（iPhoneキーボードの🎤音声入力を使う）=====
+function kVoiceMsg(html){
+  const el=document.getElementById('k-voice');
+  if(html){el.innerHTML=html;el.style.display='block';}else{el.style.display='none';}
+}
+function kStopVoice(){ document.getElementById('k-mic').classList.remove('listening'); }
+// 🎤ボタン: 文字キーボードで開いて、キーボードのマイクで話してもらう
+function kVoice(){
+  sndYbChk();
+  const inp=document.getElementById('k-weight');
+  inp.setAttribute('inputmode','text');
+  inp.value='';
+  kMsg('');
+  document.getElementById('k-mic').classList.add('listening');
+  inp.blur(); inp.focus();
+}
+document.getElementById('k-weight')?.addEventListener('blur',function(){ kStopVoice(); this.setAttribute('inputmode','numeric'); });
+
+const kEmsSteps=[500,600,700,800,900,1000,1250,1500,1750,2000,2500,3000,3500,4000,4500,5000,5500,6000,7000,8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000,20000,21000,22000,23000,24000,25000,26000,27000,28000,29000,30000];
+const kEmsR={z1:[1450,1600,1750,1900,2050,2200,2500,2800,3100,3400,3900,4400,4900,5400,5900,6400,6900,7400,8200,9000,9800,10600,11400,12200,13000,13800,14600,15400,16200,17000,17800,18600,19400,20200,21000,21800,22600,23400,24200,25000,25800,26600],z2:[1900,2150,2400,2650,2900,3150,3500,3850,4200,4550,5150,5750,6350,6950,7550,8150,8750,9350,10350,11350,12350,13350,14350,15350,16350,17350,18350,19350,20350,21350,22350,23350,24350,25350,26350,27350,28350,29350,30350,31350,32350,33350],z3:[3150,3400,3650,3900,4150,4400,5000,5550,6150,6700,7750,8800,9850,10900,11950,13000,14050,15100,17200,19300,21400,23500,25600,27700,29800,31900,34000,36100,38200,40300,42400,44500,46600,48700,50800,52900,55000,57100,59200,61300,63400,65500],z4:[3900,4180,4460,4740,5020,5300,5990,6600,7290,7900,9100,10300,11500,12700,13900,15100,16300,17500,19900,22300,24700,27100,29500,31900,34300,36700,39100,41500,43900,46300,48700,51100,53500,55900,58300,60700,63100,65500,67900,70300,72700,75100],z5:[3600,3900,4200,4500,4800,5100,5850,6600,7350,8100,9600,11100,12600,14100,15600,17100,18600,20100,22500,24900,27300,29700,32100,34500,36900,39300,41700,44100,46500,48900,51300,53700,56100,58500,60900,63300,65700,68100,70500,72900,75300,77700]};
+const kParcelSteps=Array.from({length:30},(_,i)=>(i+1)*1000);
+const kAirR={z1:[2050,2750,3450,4150,4850,5550,6250,6950,7650,8350,8850,9350,9850,10350,10850,11350,11850,12350,12850,13350,13850,14350,14850,15350,15850,16350,16850,17350,17850,18350],z2:[2500,3700,4900,6100,7300,8500,9700,10900,12100,13300,13950,14600,15250,15900,16550,17200,17850,18500,19150,19800,20450,21100,21750,22400,23050,23700,24350,25000,25650,26300],z3:[3850,6000,8150,10300,12450,14600,16750,18900,21050,23200,24800,26400,28000,29600,31200,32800,34400,36000,37600,39200,40800,42400,44000,45600,47200,48800,50400,52000,53600,55200],z4:[4200,6700,9200,11700,14200,16700,19200,21700,24200,26700,28700,30700,32700,34700,36700,38700,40700,42700,44700,46700,48700,50700,52700,54700,56700,58700,60700,62700,64700,66700],z5:[4550,7250,9950,12650,15350,18050,20750,23450,26150,28850,30650,32450,34250,36050,37850,39650,41450,43250,45050,46850,48650,50450,52250,54050,55850,57650,59450,61250,63050,64850]};
+const kSeaR={z1:[1800,2200,2600,3000,3400,3800,4200,4600,5000,5400,5800,6200,6600,7000,7400,7800,8200,8600,9000,9400,9800,10200,10600,11000,11400,11800,12200,12600,13000,13400],z2:[2100,2600,3100,3600,4100,4600,5100,5600,6100,6600,7000,7400,7800,8200,8600,9000,9400,9800,10200,10600,11000,11400,11800,12200,12600,13000,13400,13800,14200,14600],z3:[2500,3100,3700,4300,4900,5500,6100,6700,7300,7900,8300,8700,9100,9500,9900,10300,10700,11100,11500,11900,12300,12700,13100,13500,13900,14300,14700,15100,15500,15900],z4:[2600,3300,4000,4700,5400,6100,6800,7500,8200,8900,9500,10100,10700,11300,11900,12500,13100,13700,14300,14900,15500,16100,16700,17300,17900,18500,19100,19700,20300,20900],z5:[2700,3400,4100,4800,5500,6200,6900,7600,8300,9000,9600,10200,10800,11400,12000,12600,13200,13800,14400,15000,15600,16200,16800,17400,18000,18600,19200,19800,20400,21000]};
+function kCalc(){
+  const method=document.getElementById('k-method').value;
+  const zone=document.getElementById('k-zone').value;
+  const inp=document.getElementById('k-weight');
+  const ws=inp.value;
+  const ra=document.getElementById('k-resultArea');
+  const w=kParseWeight(ws);
+  if(isNaN(w)||w<=0){sndError();kMsg("重さ（グラム）を入力してください");ra.style.display='none';return;}
+  inp.value=w; inp.setAttribute('inputmode','numeric'); kVoiceMsg('');
+  if(w>30000){sndError();kMsg("30kg(30,000g)を超える荷物は計算できません");ra.style.display='none';return;}
+  kMsg('');
+  sndCalc();
+  const steps=(method==='ems')?kEmsSteps:kParcelSteps;
+  const table=(method==='ems')?kEmsR:(method==='air')?kAirR:kSeaR;
+  let limitG=0,startG=0,price=0;
+  for(let i=0;i<steps.length;i++){if(w<=steps[i]){limitG=steps[i];startG=(i===0)?0:steps[i-1];price=table[zone][i];break;}}
+  document.getElementById('k-range').innerText=startG.toLocaleString()+" g 超 ～ "+limitG.toLocaleString()+" g まで";
+  document.getElementById('k-inputG').innerText=w.toLocaleString()+" g";
+  document.getElementById('k-resZone').innerText=document.getElementById('k-zone').selectedOptions[0].text;
+  document.getElementById('k-resPrice').innerText=price.toLocaleString();
+  ra.style.display='block';
+}
+
+document.getElementById('k-weight')?.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();this.blur();}});
+
+// ===== 引受条件 =====
+const hDef={weight:30,length:1.50,girth:3.00};
+const hCtries=["中国","アメリカ","台湾","韓国","香港","タイ","オーストラリア","ベトナム","イギリス","シンガポール","カナダ","ドイツ","フランス","フィリピン","マレーシア","インドネシア","イタリア","ニュージーランド","メキシコ","ブラジル","スペイン","オランダ","スイス","インド","ベルギー","スウェーデン","アラブ首長国連邦","ポーランド","カンボジア","ペルー","トルコ","オーストリア","アイルランド","フィンランド","デンマーク","チェコ","ポルトガル","イスラエル","ハンガリー","アルゼンチン","南アフリカ","ノルウェー","チリ","サウジアラビア","スリランカ","ミャンマー","ラオス","モンゴル","パラグアイ","リトアニア"];
+const hEmsEx={"中国":{weight:30,length:1.80,girth:3.00},"アメリカ":{weight:30,length:1.50,girth:2.75},"マカオ":{weight:30,length:1.05,girth:2.00},"フィリピン":{weight:20,length:1.50,girth:3.00},"オーストラリア":{weight:20,length:1.05,girth:3.00},"アルゼンチン":{weight:20,length:1.05,girth:2.00},"ドイツ":{weight:30,length:1.05,girth:2.00},"スペイン":{weight:30,length:1.05,girth:2.00},"アラブ首長国連邦":{weight:30,length:1.05,girth:2.00},"デンマーク":{weight:20,length:1.05,girth:2.00},"モンゴル":{weight:30,length:1.50,girth:3.00},"オランダ":{weight:23,length:1.50,girth:3.00},"スウェーデン":{weight:20,length:1.50,girth:3.00},"ポーランド":{weight:20,length:1.50,girth:3.00}};
+const hAirEx={"韓国":{weight:20,length:1.05,girth:2.00},"フランス":{weight:30,length:1.05,girth:2.00},"アメリカ":{weight:30,length:1.05,girth:2.00},"フィリピン":{weight:20,length:1.50,girth:3.00},"オーストラリア":{weight:20,length:1.05,girth:2.00},"ブラジル":{weight:30,length:1.05,girth:2.00},"ドイツ":{weight:30,length:1.05,girth:2.00},"スペイン":{weight:30,length:1.05,girth:2.00},"ネパール":{weight:20,length:1.05,girth:2.00},"デンマーク":{weight:20,length:1.05,girth:2.00},"オランダ":{weight:23,length:1.50,girth:3.00},"インド":{weight:20,length:1.05,girth:2.00},"スウェーデン":{weight:20,length:1.05,girth:2.00},"アラブ首長国連邦":{weight:30,length:1.05,girth:2.00},"ポーランド":{weight:20,length:1.50,girth:3.00},"イスラエル":{weight:20,length:1.50,girth:3.00},"ハンガリー":{weight:20,length:1.50,girth:3.00},"アルゼンチン":{weight:20,length:1.05,girth:2.00},"南アフリカ":{weight:10,length:1.05,girth:1.80},"サウジアラビア":{weight:30,length:1.05,girth:2.00},"スリランカ":{weight:30,length:1.05,girth:2.00},"ミャンマー":{weight:2,length:1.05,girth:2.00},"ラオス":{weight:30,length:1.05,girth:2.00},"パラグアイ":{weight:10,length:1.05,girth:2.00}};
+const hSurfEx={"韓国":{weight:20,length:1.05,girth:2.00},"フランス":{weight:30,length:1.05,girth:2.00},"アメリカ":{weight:30,length:1.05,girth:2.00},"フィリピン":{weight:20,length:1.50,girth:3.00},"オーストラリア":{weight:20,length:1.05,girth:2.00},"ドイツ":{weight:30,length:1.05,girth:2.00},"スペイン":{weight:30,length:1.05,girth:2.00},"ブラジル":{weight:30,length:1.05,girth:2.00},"デンマーク":{weight:20,length:1.05,girth:2.00},"メキシコ":"STOP","アルゼンチン":"STOP","チリ":"STOP","モンゴル":"STOP","パラグアイ":"STOP","オランダ":{weight:23,length:1.50,girth:3.00},"インド":{weight:20,length:1.05,girth:2.00},"スウェーデン":{weight:20,length:1.05,girth:2.00},"アラブ首長国連邦":{weight:30,length:1.05,girth:2.00},"ポーランド":{weight:20,length:1.50,girth:3.00},"イスラエル":{weight:20,length:1.50,girth:3.00},"ハンガリー":{weight:20,length:1.50,girth:3.00},"南アフリカ":{weight:10,length:1.05,girth:1.80},"サウジアラビア":{weight:30,length:1.05,girth:2.00},"スリランカ":{weight:30,length:1.05,girth:2.00},"ミャンマー":{weight:2,length:1.05,girth:2.00},"ラオス":{weight:30,length:1.50,girth:3.00}};
+
+function hAnthem(q){
+  const US=[[392,0.3],[329.6,0.15],[261.6,0.45],[329.6,0.3],[392,0.3],[523.3,0.6],[659.3,0.3],[587.3,0.15],[523.3,0.3],[329.6,0.3],[370,0.3],[392,0.6]];
+  const UK=[[392,0.4],[392,0.4],[440,0.4],[370,0.6],[392,0.2],[440,0.4],[493.9,0.4],[493.9,0.4],[523.3,0.4],[493.9,0.6],[440,0.2],[392,0.4]];
+  const FR=[[392,0.4],[392,0.2],[392,0.2],[523.3,0.6],[523.3,0.2],[587.3,0.6],[587.3,0.2],[784,0.6],[659.3,0.2],[523.3,0.6]];
+  const CN=[[392,0.2],[523.3,0.4],[523.3,0.2],[523.3,0.2],[659.3,0.4],[659.3,0.2],[659.3,0.2],[784,0.4],[784,0.4],[523.3,0.2],[587.3,0.2],[659.3,0.2],[392,0.2],[523.3,0.6]];
+  const DE=[[329.6,0.3],[329.6,0.3],[349.2,0.3],[392,0.3],[392,0.3],[349.2,0.3],[329.6,0.3],[293.7,0.3],[261.6,0.3],[261.6,0.3],[293.7,0.3],[329.6,0.3],[329.6,0.45],[293.7,0.15],[293.7,0.6]];
+  const BR=[[523.3,0.3],[523.3,0.15],[493.9,0.15],[440,0.15],[392,0.45],[349.2,0.15],[329.6,0.15],[293.7,0.15],[261.6,0.6],[329.6,0.3],[392,0.3],[523.3,0.6]];
+  const map={"アメリカ":US,"イギリス":UK,"フランス":FR,"中国":CN,"ドイツ":DE,"ブラジル":BR};
+  const melody=map[q];
+  if(melody){
+    let t=0;
+    melody.forEach(([f,d])=>{tone(f,'square',d*0.9,0.05,t);t+=d;});
+  } else { sndHSelect(); }
+}
+
+function hInit(){
+  const sel=document.getElementById('h-country');
+  hCtries.forEach((c,i)=>{const o=document.createElement('option');o.value=c;o.text=`${i+1}. ${c}`;sel.appendChild(o);});
+}
+function hField(pre,type,val){
+  const el=document.getElementById(`h-${pre}${type}`);
+  let std,unit,dv;
+  if(type==='Weight'){std=30;unit='kg';dv=val;}
+  else if(type==='Length'){std=1.50;unit='m';dv=val.toFixed(2);}
+  else{std=3.00;unit='m';dv=val.toFixed(2);}
+  el.textContent=`${dv} ${unit} まで`;
+  el.style.color=(val!==std)?'#e53935':'#000';
+}
+function hSetStop(cid){
+  const card=document.getElementById(cid);
+  card.querySelectorAll('.h-stop-ov').forEach(e=>e.remove());
+  const ov=document.createElement('div');ov.className='h-stop-ov';ov.innerText='× 引受停止';card.appendChild(ov);
+}
+function hSearch(){
+  const q=document.getElementById('h-country').value;
+  if(!q) return;
+  hAnthem(q);
+  document.querySelectorAll('.h-stop-ov').forEach(e=>e.remove());
+  const ems=hEmsEx[q]||hDef;
+  const air=hAirEx[q]||hDef;
+  const surf=hSurfEx[q]||hDef;
+  document.getElementById('h-ctitle').textContent=`📍 ${q}`;
+  const isEx=(hEmsEx[q]&&(ems.weight!==30||ems.length!==1.50||ems.girth!==3.00))||(hAirEx[q]&&(air.weight!==30||air.length!==1.50||air.girth!==3.00))||(hSurfEx[q]&&surf!=="STOP"&&(surf.weight!==30||surf.length!==1.50||surf.girth!==3.00));
+  const sb=document.getElementById('h-badge');
+  if(isEx){sb.textContent="例外規定データ適用";sb.className="h-badge h-badge-ex";}
+  else{sb.textContent="標準規定（1.5m 3.0m 30kg）適用";sb.className="h-badge h-badge-std";}
+  hField('ems','Length',ems.length);hField('ems','Girth',ems.girth);hField('ems','Weight',ems.weight);
+  hField('air','Length',air.length);hField('air','Girth',air.girth);hField('air','Weight',air.weight);
+  if(surf==="STOP"){hSetStop('h-cardSurf');}
+  else{hField('surf','Length',surf.length);hField('surf','Girth',surf.girth);hField('surf','Weight',surf.weight);}
+  const ra=document.getElementById('h-resultArea');
+  ra.classList.remove('h-fade');void ra.offsetWidth;ra.classList.add('h-fade');
+  ra.style.display='block';
+}
+
+// =============================================================
+// Claude Code のキャラクター（パソコンを打つ版）
+//   Claude アプリの動き（正面で2秒止まる → 目を細める → ノートパソコンを出す → 横を向いてカタカタ打つ → 正面に戻る）を
+//   動画から1コマずつ写したもの。6秒でくり返す。1マス＝半ドット（体は横24×縦16マス）
+// =============================================================
+// =============================================================
+// キャラクターのいろいろな動き（見本ページ https://claude.ai/artifact/L4sFgs3LjxX7Rcd4s6ugBM と同じもの）
+//   window.CC_EXTRA に 01〜120 と 136〜175 の動きが入っている。.seq が [コマの絵, 長さ(ミリ秒)] の並び
+// =============================================================
+(function ccExtraMoves() {
+// 1マス＝半ドット。体は横24×縦16マス（パソコンを打つ版と同じ大きさ）
+const O = '#d97757', K = '#1a1612', PINK = '#e8687d', CHEEK = '#f2a0a8', GOLD = '#f2c14e';
+const ZZ = () => getComputedStyle(document.documentElement).getPropertyValue('--zz').trim() || '#6f7fa8';
+
+// 小さな絵（x, y は左上）
+const zee   = (x, y, c) => [[c,x,y,3,1],[c,x+1,y+1,1,1],[c,x,y+2,3,1]];
+const heart = (x, y)    => [[PINK,x,y,2,1],[PINK,x+3,y,2,1],[PINK,x,y+1,5,1],[PINK,x+1,y+2,3,1],[PINK,x+2,y+3,1,1]];
+const ques  = (x, y)    => [[O,x,y,3,1],[O,x+2,y+1,1,1],[O,x+1,y+2,1,1],[O,x+1,y+4,1,1]];
+const note  = (x, y)    => [[O,x,y+2,2,2],[O,x+1,y-1,1,3],[O,x+2,y-1,1,1]];
+const spark = (x, y)    => [[GOLD,x+1,y,1,3],[GOLD,x,y+1,3,1]];
+const bang  = (x, y)    => [[O,x,y,1,3],[O,x,y+4,1,1]];
+const moon  = (x, y)    => [[GOLD,x+1,y,2,1],[GOLD,x,y+1,1,3],[GOLD,x+1,y+4,2,1]];
+const AQUA = '#7cc3ea', AQUA_IN = '#d6eefa', WHITE = '#f7f2ee', CAP = '#4a5fa8', QUILT = '#5b7bd5', QUILT2 = '#7d97e0';
+// はなちょうちん（s = 1〜3 の大きさ）
+function bubble(x, y, s) {
+  if (s === 1) return [[AQUA_IN,x,y,2,2],[AQUA,x,y,1,1]];
+  if (s === 2) return [[AQUA_IN,x+1,y+1,2,2],[AQUA,x+1,y,2,1],[AQUA,x,y+1,1,2],[AQUA,x+3,y+1,1,2],[AQUA,x+1,y+3,2,1],[WHITE,x+1,y+1,1,1]];
+  return [[AQUA_IN,x+1,y+1,4,4],[AQUA,x+2,y,2,1],[AQUA,x+1,y+1,1,1],[AQUA,x+4,y+1,1,1],[AQUA,x,y+2,1,2],[AQUA,x+5,y+2,1,2],
+          [AQUA,x+1,y+4,1,1],[AQUA,x+4,y+4,1,1],[AQUA,x+2,y+5,2,1],[WHITE,x+2,y+2,1,1]];
+}
+
+// キャラクター1コマを作る
+function fig(o = {}) {
+  const dx = o.dx || 0, dy = o.dy || 0, sq = o.squash || 0, top = dy + sq, r = [];
+  const R = (c, x, y, w, h) => r.push([c, x + dx, y, w, h]);
+  if (o.pillow) R(WHITE, 0, top + 1, 24, 6);                  // まくら（体の後ろ）
+  R(O, 4, top, 16, 12 - sq);                                  // 頭と体
+  const arm = (side, pose) => {                               // 腕：side=0 左 / 20 右
+    if (pose === 'hi') R(O, side, top - 3, 4, 7);             // 高く上げる
+    else if (pose === 'up') R(O, side, top, 4, 4);            // 少し上げる
+    else R(O, side, top + 4, 4, 4);                           // ふつう
+  };
+  arm(0, o.l); arm(20, o.r);
+  const lift = o.lift || [];                                  // 持ち上げる足の番号
+  if (!o.nolegs) [4, 8, 14, 18].forEach((x, i) => lift.includes(i) ? R(O, x, dy + 12, 2, 2) : R(O, x, dy + 12, 2, 4));
+  const ey = top + 2 + (sq ? 1 : 0), lk = o.look || 0;        // 目
+  const eye = (x, kind) => {
+    if (kind === 'closed') R(K, x + lk, ey + 1, 2, 1);
+    else if (kind === 'happy') { R(K, x - 1, ey + 1, 1, 1); R(K, x, ey, 2, 1); R(K, x + 2, ey + 1, 1, 1); }
+    else if (kind === 'big') R(K, x, ey - 1, 2, 3);                                  // びっくりした大きな目
+    else if (kind === 'angry') { const l = x < 12; R(K, l ? x : x + 1, ey, 1, 1); R(K, l ? x + 1 : x, ey + 1, 1, 1); R(K, x, ey + 2, 2, 1); }
+    else if (kind === 'dizzy') { [[-1,-1],[1,-1],[0,0],[-1,1],[1,1]].forEach(([a, b]) => R(K, x + 1 + a, ey + b + 1, 1, 1)); }   // ×の目
+    else R(K, x + lk, ey, 2, 2);
+  };
+  const e = o.eyes || 'open';
+  eye(6, e === 'wink' ? 'closed' : e); eye(16, e === 'wink' ? 'open' : e);
+  if (o.cheek) { R(CHEEK, 5, ey + 3, 2, 1); R(CHEEK, 17, ey + 3, 2, 1); }
+  if (o.mouth === 'open') R(K, 11, ey + 4, 2, 2);             // 口（ふだんは描かない）
+  else if (o.mouth === 'closed') R(K, 11, ey + 5, 2, 1);
+  if (o.cap) {                                                // ナイトキャップ（先がたれて、白いぽんぽん）
+    R(WHITE, 3, top - 1, 18, 2); R(CAP, 5, top - 3, 14, 2); R(CAP, 8, top - 5, 11, 2); R(CAP, 12, top - 7, 9, 2);
+    R(CAP, 19, top - 6, 3, 2); R(WHITE, 22, top - 5, 2, 2);
+  }
+  if (o.quilt) {                                              // おふとん（体の前にかける）
+    R(QUILT, -3, top + 6, 30, 16 - top - 6 + (o.dy || 0)); R(WHITE, -3, top + 6, 30, 2);
+    [[0, 10], [8, 12], [16, 10], [24, 12]].forEach(([x, y]) => R(QUILT2, x - 2, top + y, 3, 2));
+  }
+  (o.extra || []).forEach(q => r.push(q));
+  return r;
+}
+
+// 動き：[コマ, 長さ(ミリ秒)] の並び
+const MOVES = [
+  { name: 'ぴょんぴょん', desc: 'しゃがんでから、元気にジャンプ', seq: [
+    [fig(), 700], [fig({ squash: 2 }), 140], [fig({ dy: -3, l: 'up', r: 'up' }), 80], [fig({ dy: -7, l: 'up', r: 'up', lift: [0,1,2,3] }), 140],
+    [fig({ dy: -8, l: 'hi', r: 'hi', eyes: 'happy', lift: [0,1,2,3] }), 160], [fig({ dy: -7, l: 'up', r: 'up' }), 100], [fig({ dy: -3 }), 80],
+    [fig({ squash: 2 }), 140], [fig(), 260], [fig({ squash: 2 }), 120], [fig({ dy: -4, l: 'up', r: 'up', lift: [0,1,2,3] }), 120],
+    [fig({ dy: -5, l: 'up', r: 'up', eyes: 'happy', lift: [0,1,2,3] }), 140], [fig({ dy: -3 }), 90], [fig({ squash: 2 }), 140], [fig(), 600] ] },
+
+  { name: '手をふる', desc: 'にっこりして、バイバイ', seq: (() => {
+    const s = [[fig(), 700], [fig({ eyes: 'happy', cheek: true, r: 'up' }), 160]];
+    for (let i = 0; i < 6; i++) s.push([fig({ eyes: 'happy', cheek: true, r: i % 2 ? 'up' : 'hi' }), 190]);
+    s.push([fig({ eyes: 'happy', cheek: true }), 400], [fig(), 500]); return s; })() },
+
+  { name: 'おやすみ', desc: '目をとじて、すうすう。Zが浮かぶ', seq: (() => {
+    const s = [];
+    for (let i = 0; i < 8; i++) {
+      const ex = [];
+      ex.push(...zee(22, -2 - (i % 4) * 2, ZZ()));
+      if (i % 4 >= 2) ex.push(...zee(26, -9 - (i % 4 - 2) * 2, ZZ()));
+      s.push([fig({ eyes: 'closed', squash: i % 2, extra: ex }), 480]);
+    }
+    return s; })() },
+
+  { name: 'ハート', desc: 'まばたきしてから、ハートがぽわん', seq: [
+    [fig(), 900], [fig({ eyes: 'closed' }), 120], [fig(), 300],
+    [fig({ eyes: 'happy', cheek: true, extra: heart(10, -5) }), 220], [fig({ eyes: 'happy', cheek: true, dy: -1, extra: heart(10, -7) }), 220],
+    [fig({ eyes: 'happy', cheek: true, extra: heart(10, -9) }), 220], [fig({ eyes: 'happy', cheek: true, dy: -1, extra: heart(10, -11) }), 260],
+    [fig({ eyes: 'happy', cheek: true, extra: [...heart(5, -13), ...heart(15, -12)] }), 320], [fig({ eyes: 'happy', cheek: true }), 500], [fig(), 400] ] },
+
+  { name: 'きょろきょろ', desc: '左右を見て、はてな？', seq: [
+    [fig(), 600], [fig({ look: -1 }), 450], [fig({ look: 1 }), 450], [fig({ look: -1 }), 260], [fig({ look: 1 }), 260], [fig(), 250],
+    [fig({ r: 'up', extra: ques(21, -8) }), 200], [fig({ r: 'up', dy: -1, extra: ques(21, -9) }), 900], [fig(), 500] ] },
+
+  { name: 'ダンス', desc: '音符に合わせて、左右にステップ', seq: (() => {
+    const s = [[fig(), 500]];
+    for (let i = 0; i < 8; i++) {
+      const a = i % 2 === 0;
+      s.push([fig({ dx: a ? -1 : 1, l: a ? 'hi' : 'side', r: a ? 'side' : 'hi', lift: a ? [0, 2] : [1, 3], eyes: 'happy',
+        extra: note(a ? 24 : -4, -6 - (i % 3)) }), 260]);
+    }
+    s.push([fig(), 500]); return s; })() },
+
+  { name: 'やったー', desc: '両手を上げて、キラキラ', seq: (() => {
+    const s = [[fig(), 600], [fig({ squash: 1 }), 120]];
+    for (let i = 0; i < 6; i++) {
+      const a = i % 2 === 0;
+      s.push([fig({ dy: a ? -2 : 0, l: 'hi', r: 'hi', eyes: 'happy', cheek: true,
+        extra: a ? [...spark(-3, -4), ...spark(25, -2)] : [...spark(-2, 2), ...spark(24, -7)] }), 220]);
+    }
+    s.push([fig({ eyes: 'happy' }), 400], [fig(), 400]); return s; })() },
+];
+
+// おやすみのパターン
+const SLEEPS = [
+  { name: 'こっくりこっくり', desc: 'うとうと…はっ！と起きて、また眠る', seq: [
+    [fig(), 700], [fig({ eyes: 'closed' }), 500], [fig(), 250], [fig({ eyes: 'closed' }), 600],
+    [fig({ eyes: 'closed', squash: 1 }), 500], [fig({ eyes: 'closed', squash: 2 }), 700],
+    [fig({ dy: -1, extra: bang(22, -7) }), 500], [fig({ look: -1 }), 300], [fig({ look: 1 }), 300], [fig(), 400],
+    [fig({ eyes: 'closed' }), 500], [fig({ eyes: 'closed', squash: 1 }), 500], [fig({ eyes: 'closed', squash: 2, extra: zee(22, -3, ZZ()) }), 900] ] },
+
+  { name: 'おふとん', desc: 'まくらとおふとんで、ぐっすり', seq: (() => {
+    const s = [];
+    for (let i = 0; i < 8; i++) {
+      const ex = zee(22, -3 - (i % 4) * 2, ZZ());
+      if (i % 4 >= 2) ex.push(...zee(26, -10 - (i % 4 - 2) * 2, ZZ()));
+      s.push([fig({ eyes: 'closed', pillow: true, quilt: true, squash: i % 2, extra: ex }), 520]);
+    }
+    return s; })() },
+
+  { name: 'はなちょうちん', desc: 'ちょうちんがふくらんで…パチン！', seq: (() => {
+    const s = [];
+    for (let k = 0; k < 2; k++) {
+      s.push([fig({ eyes: 'closed', extra: bubble(13, 7, 1) }), 450], [fig({ eyes: 'closed', squash: 1, extra: bubble(13, 8, 1) }), 450]);
+      s.push([fig({ eyes: 'closed', extra: bubble(13, 6, 2) }), 450], [fig({ eyes: 'closed', squash: 1, extra: bubble(13, 7, 1) }), 450]);
+    }
+    s.push([fig({ eyes: 'closed', extra: bubble(13, 6, 2) }), 450], [fig({ eyes: 'closed', extra: bubble(12, 5, 3) }), 700],
+      [fig({ dy: -2, l: 'up', r: 'up', extra: [...bang(22, -9), [AQUA, 10, 3, 1, 1], [AQUA, 19, 4, 1, 1], [AQUA, 15, 1, 1, 1]] }), 450],
+      [fig({ look: -1 }), 300], [fig({ look: 1 }), 300], [fig({ eyes: 'closed' }), 600]);
+    return s; })() },
+
+  { name: 'ナイトキャップ', desc: 'ぼうしをかぶって、お月さまと星', seq: (() => {
+    const s = [];
+    for (let i = 0; i < 8; i++) {
+      const ex = [...moon(-6, -13), ...(i % 2 ? spark(26, -12) : spark(-2, -4)), ...(i % 4 < 2 ? spark(24, 2) : [])];
+      s.push([fig({ eyes: 'closed', cap: true, squash: i % 2, extra: ex }), 560]);
+    }
+    return s; })() },
+];
+
+// ごはんの絵
+const RICE = '#fbf8f2', NORI = '#2f3b2f', BOWL = '#c94b3c', NOODLE = '#f2d36b', STICK = '#8b5a2b', STEAM = '#c9c2bc',
+      SPONGE = '#f3d9a4', BERRY = '#e0475b', LEAF = '#5aa35a', TEA = '#6b9a5b', TEA_IN = '#b7d48a';
+function onigiri(x, y, bite) {                                // bite 0=まるごと 1=ひとくち 2=はんぶん 3=ひとかけ
+  if (bite >= 3) return [[RICE, x + 2, y + 3, 2, 1], [NORI, x + 2, y + 4, 2, 1]];
+  if (bite === 2) return [[RICE, x + 3, y + 2, 3, 1], [RICE, x + 5, y + 3, 1, 1], [NORI, x + 3, y + 3, 2, 2]];
+  if (bite === 1) return [[RICE, x + 3, y + 1, 2, 1], [RICE, x + 1, y + 2, 5, 2], [NORI, x + 1, y + 3, 4, 2]];
+  return [[RICE, x + 2, y, 2, 1], [RICE, x + 1, y + 1, 4, 1], [RICE, x, y + 2, 6, 2], [NORI, x + 1, y + 3, 4, 2]];
+}
+function ramen(x, y, left) {                                  // どんぶり（left＝残りの量 2〜0）
+  const r = [[BOWL, x, y + 1, 14, 2], [BOWL, x + 1, y + 3, 12, 1], [BOWL, x + 3, y + 4, 8, 1], [RICE, x, y + 2, 14, 1]];
+  if (left > 0) r.push([NOODLE, x + 1, y, 12, 1]);
+  if (left > 1) r.push([NOODLE, x + 3, y - 1, 3, 1], [NOODLE, x + 8, y - 1, 3, 1]);
+  return r;
+}
+const steam = (x, y, k) => [[STEAM, x + (k % 2), y, 1, 2], [STEAM, x + 1 - (k % 2), y - 2, 1, 2], [STEAM, x + 4 - (k % 2), y - 1, 1, 2], [STEAM, x + 3 + (k % 2), y - 3, 1, 2]];
+function cake(x, y, left) {                                   // ショートケーキ（left＝残りの幅 3〜0、いちごはberryがtrueのとき）
+  const r = [[RICE, x - 1, y + 5, 10, 1]];                    // おさら
+  const w = [0, 3, 5, 8][left];
+  if (w) r.push([RICE, x, y + 1, w, 1], [SPONGE, x, y + 2, w, 3], [RICE, x, y + 3, w, 1]);
+  return r;
+}
+const berry = (x, y) => [[BERRY, x, y, 2, 2], [LEAF, x, y - 1, 2, 1]];
+const cup = (x, y) => [[TEA, x, y, 4, 5], [TEA_IN, x, y, 4, 1], [RICE, x + 1, y + 2, 2, 1]];
+
+// ごはんのパターン
+const FOODS = [
+  { name: 'おにぎり', desc: 'パクッ、もぐもぐ…ぜんぶ食べて、にっこり', seq: (() => {
+    const s = [[fig({ mouth: 'closed', extra: onigiri(15, 8, 0) }), 700]];
+    for (let b = 0; b < 3; b++) {
+      s.push([fig({ r: 'up', mouth: 'open', extra: onigiri(12, 5, b) }), 260]);
+      s.push([fig({ r: 'up', mouth: 'closed', extra: onigiri(12, 5, b + 1) }), 160]);
+      for (let c = 0; c < 3; c++) s.push([fig({ eyes: 'happy', mouth: c % 2 ? 'open' : 'closed', squash: c % 2, extra: onigiri(15, 8, b + 1) }), 200]);
+    }
+    s.push([fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: heart(18, -5) }), 800], [fig({ eyes: 'happy', cheek: true }), 400]);
+    return s; })() },
+
+  { name: 'ラーメン', desc: 'ゆげの立つラーメンを、ずずっとすする', seq: (() => {
+    const s = [];
+    for (let k = 0; k < 3; k++) s.push([fig({ extra: [...ramen(5, 11, 2), ...steam(10, 7 - k, k)] }), 300]);
+    for (let n = 0; n < 2; n++) {
+      s.push([fig({ r: 'up', mouth: 'open', extra: [...ramen(5, 11, 2 - n), [NOODLE, 12, 7, 1, 4], [STICK, 21, 0, 1, 7], [STICK, 23, 1, 1, 7]] }), 300]);
+      s.push([fig({ eyes: 'closed', r: 'up', mouth: 'open', extra: [...ramen(5, 11, 2 - n), [NOODLE, 12, 8, 1, 3]] }), 180]);
+      s.push([fig({ eyes: 'closed', mouth: 'closed', extra: [...ramen(5, 11, 1 - n)] }), 200]);
+      for (let c = 0; c < 2; c++) s.push([fig({ eyes: 'happy', mouth: c ? 'open' : 'closed', squash: c, extra: [...ramen(5, 11, 1 - n), ...steam(10, 6, c)] }), 220]);
+    }
+    s.push([fig({ eyes: 'happy', cheek: true, l: 'up', r: 'up', extra: ramen(5, 11, 0) }), 900]);
+    return s; })() },
+
+  { name: 'ショートケーキ', desc: 'キラキラ目で、いちごは最後にパクッ', seq: (() => {
+    const s = [[fig({ extra: [...cake(8, 9, 3), ...berry(11, 9)] }), 600],
+               [fig({ eyes: 'happy', extra: [...cake(8, 9, 3), ...berry(11, 9), ...spark(-2, -2), ...spark(24, -4)] }), 600]];
+    for (let left = 3; left > 0; left--) {
+      s.push([fig({ r: 'up', mouth: 'open', extra: [...cake(8, 9, left), ...berry(11, 9)] }), 240]);
+      s.push([fig({ eyes: 'happy', mouth: 'closed', extra: [...cake(8, 9, left - 1), ...berry(11, 9)] }), 200]);
+      s.push([fig({ eyes: 'happy', mouth: 'open', squash: 1, extra: [...cake(8, 9, left - 1), ...berry(11, 9)] }), 200]);
+    }
+    s.push([fig({ r: 'up', mouth: 'open', extra: [...cake(8, 9, 0), ...berry(11, 6)] }), 300],
+           [fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: cake(8, 9, 0) }), 300],
+           [fig({ eyes: 'happy', cheek: true, extra: [...cake(8, 9, 0), ...heart(9, -6)] }), 900]);
+    return s; })() },
+
+  { name: 'お茶', desc: 'あったかいお茶で、ほっとひと息', seq: (() => {
+    const s = [];
+    for (let k = 0; k < 2; k++) s.push([fig({ extra: [...cup(14, 8), ...steam(14, 5 - k, k)] }), 400]);
+    s.push([fig({ r: 'up', eyes: 'closed', extra: [...cup(11, 5), ...steam(11, 2, 0)] }), 500],
+           [fig({ r: 'up', eyes: 'closed', squash: 1, extra: [...cup(11, 6), ...steam(11, 3, 1)] }), 600],
+           [fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: cup(14, 8) }), 400],
+           [fig({ eyes: 'happy', cheek: true, mouth: 'open', extra: [...cup(14, 8), [STEAM, 13, 4, 2, 1], [STEAM, 15, 3, 2, 1]] }), 500],
+           [fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: cup(14, 8) }), 900]);
+    return s; })() },
+];
+
+// ── ごはん（追加の10パターン） ──
+const DOUGH = '#d9a066', ICING = '#f29bb6', HOLE = '#a8743f', SPRINK = '#7cc3ea', CONE = '#e0b26a', CONE_D = '#b9874a',
+      MELON = '#e2474f', RIND = '#4f9a4a', RIND_IN = '#eef3dc', TAKO = '#c98a4a', SAUCE = '#6b3a1f', TRAY = '#d8c19a',
+      BUN = '#e2a55a', LETTUCE = '#7cc36a', PATTY = '#7a4a2a', CHEESE = '#f5c542', APPLE = '#d8433f', PIZZA = '#f5d26b',
+      PEPPER = '#c0392b', YAKI = '#9a5b2e', PUDDING = '#f6dc8a', CARAMEL = '#9c5a1e', SPOON = '#c9ccd3', BANANA = '#f4d35e', BANANA_IN = '#fbefc4';
+// 食べたぶんを切り取る（side='left' は左から、'top' は上から）
+function trim(rects, side, edge) {
+  return rects.flatMap(([c, x, y, w, h]) => {
+    if (side === 'left') { if (x + w <= edge) return []; const nx = Math.max(x, edge); return [[c, nx, y, w - (nx - x), h]]; }
+    if (y + h <= edge) return []; const ny = Math.max(y, edge); return [[c, x, ny, w, h - (ny - y)]];
+  });
+}
+const donut = (x, y) => [[DOUGH,x+1,y,4,1],[DOUGH,x,y+1,6,4],[DOUGH,x+1,y+5,4,1],[ICING,x+1,y,4,1],[ICING,x,y+1,6,2],[HOLE,x+2,y+2,2,2],[SPRINK,x+1,y+1,1,1],[RICE,x+4,y,1,1],[SPRINK,x+4,y+2,1,1]];
+const softcream = (x, y) => [[RICE,x+2,y,1,1],[RICE,x+1,y+1,3,1],[RICE,x,y+2,5,2],[STEAM,x+1,y+3,3,1],[CONE,x,y+4,5,1],[CONE,x+1,y+5,3,2],[CONE,x+2,y+7,1,1],[CONE_D,x+1,y+4,1,1],[CONE_D,x+3,y+4,1,1]];
+const melon = (x, y) => [[MELON,x+3,y,2,1],[MELON,x+1,y+1,6,1],[MELON,x,y+2,8,1],[RIND_IN,x,y+3,8,1],[RIND,x,y+4,8,1],[NORI,x+4,y+1,1,1],[NORI,x+2,y+2,1,1],[NORI,x+5,y+2,1,1]];
+const burger = (x, y) => [[BUN,x+1,y,5,1],[BUN,x,y+1,7,1],[RICE,x+2,y,1,1],[RICE,x+4,y,1,1],[LETTUCE,x,y+2,7,1],[CHEESE,x,y+3,7,1],[PATTY,x,y+4,7,1],[BUN,x,y+5,7,1],[BUN,x+1,y+6,5,1]];
+const apple = (x, y) => [[APPLE,x+1,y+1,4,1],[APPLE,x,y+2,6,3],[APPLE,x+1,y+5,4,1],[STICK,x+3,y,1,1],[LEAF,x+4,y-1,2,1],[RICE,x+1,y+2,1,1]];
+const pizza = (x, y) => [[PIZZA,x+4,y,2,1],[PIZZA,x+2,y+1,4,1],[PIZZA,x,y+2,6,2],[PIZZA,x+2,y+4,4,1],[PIZZA,x+4,y+5,2,1],[DOUGH,x+6,y,1,6],[PEPPER,x+3,y+2,1,1],[PEPPER,x+4,y+4,1,1],[PEPPER,x+5,y+1,1,1]];
+const banana = (x, y) => [[BANANA_IN,x+1,y,2,5],[BANANA,x,y+5,4,3],[BANANA,x-1,y+4,1,2],[BANANA,x+4,y+4,1,2],[CONE_D,x+1,y+8,2,1]];
+const pudding = (x, y, s) => { const r = [[RICE,x-1,y+6,8,1]]; const top = y + [0, 2, 4, 6][s];
+  return r.concat(trim([[CARAMEL,x+1,y,4,2],[PUDDING,x,y+2,6,4]], 'top', top)); };
+const takoyaki = (x, y, s) => { const r = [[TRAY,x,y+3,10,1],[TRAY,x+1,y+4,8,1]];
+  for (let i = s; i < 3; i++) r.push([TAKO,x+i*3+1,y,3,3],[SAUCE,x+i*3+1,y,3,1],[RICE,x+i*3+2,y,1,1],[LEAF,x+i*3+3,y+1,1,1]);
+  return r; };
+const yakitori = (x, y, s) => { const r = [[TRAY,x,y+1,11,1]];
+  for (let i = s; i < 3; i++) r.push([YAKI,x+i*3+1,y,2,3],[SAUCE,x+i*3+1,y,2,1]);
+  return r; };
+
+// 手で持って食べる：持つ → 口へ → パクッ → もぐもぐ（bites 回）→ ごちそうさま
+function eatHeld(sprite, W, H, side, end, extraEnd = []) {
+  const at = (x, y, b) => b <= 0 ? sprite(x, y) : trim(sprite(x, y), side, side === 'left' ? x + Math.round(W * b / 3) : y + Math.round(H * b / 3));
+  const rx = 16, ry = 9 - Math.max(0, H - 6), mx = 13, my = 7 - Math.round(H / 2);
+  const s = [[fig({ mouth: 'closed', extra: at(rx, ry, 0) }), 650]];
+  for (let b = 0; b < 3; b++) {
+    s.push([fig({ r: 'up', mouth: 'open', extra: at(mx, my, b) }), 260]);
+    s.push([fig({ r: 'up', mouth: 'closed', extra: at(mx, my, b + 1) }), 160]);
+    for (let c = 0; c < 3; c++) s.push([fig({ eyes: 'happy', mouth: c % 2 ? 'open' : 'closed', squash: c % 2, extra: at(rx, ry, b + 1) }), 190]);
+  }
+  s.push([fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: [...end, ...extraEnd] }), 900], [fig({ eyes: 'happy', cheek: true }), 400]);
+  return s;
+}
+// お皿のまま食べる：ひと口ぶん（morsel）だけ口へ運ぶ
+function eatPlate(plate, morsel, end) {
+  const s = [[fig({ extra: plate(0) }), 650], [fig({ eyes: 'happy', extra: [...plate(0), ...spark(-2, -2), ...spark(24, -3)] }), 450]];
+  for (let b = 0; b < 3; b++) {
+    s.push([fig({ r: 'up', mouth: 'open', extra: [...plate(b + 1), ...morsel] }), 280]);
+    s.push([fig({ r: 'up', mouth: 'closed', extra: plate(b + 1) }), 160]);
+    for (let c = 0; c < 3; c++) s.push([fig({ eyes: 'happy', mouth: c % 2 ? 'open' : 'closed', squash: c % 2, extra: plate(b + 1) }), 190]);
+  }
+  s.push([fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: [...plate(3), ...end] }), 900], [fig({ eyes: 'happy', cheek: true }), 400]);
+  return s;
+}
+const FOODS2 = [
+  { name: 'ドーナツ', desc: 'ピンクのドーナツを、ひと口ずつ', seq: eatHeld(donut, 6, 6, 'left', heart(9, -6)) },
+  { name: 'ソフトクリーム', desc: 'てっぺんから、ぱくぱく。最後はコーンまで', seq: eatHeld(softcream, 5, 8, 'top', [...spark(-2, -3), ...spark(24, -5)]) },
+  { name: 'すいか', desc: 'しゃくしゃく食べて、たねをぷっ', seq: (() => { const s = eatHeld(melon, 8, 5, 'left', [], []);
+      s.splice(s.length - 2, 0, [fig({ mouth: 'open', extra: [[NORI, 9, 7, 1, 1]] }), 160], [fig({ mouth: 'closed', extra: [[NORI, 4, 6, 1, 1]] }), 160], [fig({ eyes: 'wink', extra: [[NORI, -3, 5, 1, 1]] }), 260]);
+      return s; })() },
+  { name: 'たこやき', desc: 'あつあつを、ひとつずつ。ハフハフ', seq: eatPlate(s => takoyaki(5, 11, s), [[TAKO, 12, 5, 3, 3], [SAUCE, 12, 5, 3, 1], ...steam(12, 2, 0)], [...steam(6, 7, 1)]) },
+  { name: 'ハンバーガー', desc: '大きなハンバーガーに、がぶっ', seq: eatHeld(burger, 7, 7, 'left', heart(9, -6)) },
+  { name: 'りんご', desc: 'まっかなりんごを、しゃりしゃり', seq: eatHeld(apple, 6, 6, 'left', [[STICK, 18, 9, 1, 3], ...spark(24, -4)]) },
+  { name: 'ピザ', desc: 'とがったほうから、チーズをのばして', seq: (() => { const s = eatHeld(pizza, 7, 6, 'left', heart(9, -6));
+      s.forEach(q => { if (q[1] === 160) q[0].push([PIZZA, 13, 7, 3, 1]); });   // パクッのとき、チーズがのびる
+      return s; })() },
+  { name: 'やきとり', desc: 'くしから、ひとつずつ引っこぬく', seq: eatPlate(s => yakitori(6, 12, s), [[YAKI, 12, 6, 2, 3], [SAUCE, 12, 6, 2, 1], [TRAY, 14, 7, 6, 1]], heart(9, -6)) },
+  { name: 'プリン', desc: 'ぷるぷるのプリンを、スプーンで', seq: eatPlate(s => pudding(9, 9, s), [[SPOON, 13, 7, 6, 1], [PUDDING, 12, 6, 2, 2]], [...heart(9, -6), ...spark(-2, -2)]) },
+  { name: 'バナナ', desc: 'かわをむいて、もぐもぐ', seq: eatHeld(banana, 4, 9, 'top', [[BANANA, 16, 13, 4, 2], [BANANA, 15, 12, 1, 2], [BANANA, 20, 12, 1, 2]]) },
+];
+
+// ── ごはん（さらに10パターン） ──
+const TUNA = '#d84a4a', TUNA_L = '#f08a8a', SAUSAGE = '#b5452f', MUSTARD = '#f5c542', CHOCO = '#5a3a22', BATTER = '#e0a04a',
+      SHRIMP = '#e0475b', CURRY = '#b8742c', CARROT = '#f08a3c', GYOZA = '#f3dcae', DANGO_P = '#f4a6c0', DANGO_G = '#9ccc65',
+      MELONPAN = '#f2d36b', MELON_L = '#d9b04a', FRYBOX = '#d84a4a';
+const sushi   = (x, y) => [[RICE,x,y+2,7,2],[STEAM,x+1,y+3,5,1],[TUNA,x,y,7,2],[TUNA_L,x+2,y,1,1],[TUNA_L,x+5,y+1,1,1]];
+const hotdog  = (x, y) => [[BUN,x+1,y+2,7,2],[SAUSAGE,x,y+1,9,1],[MUSTARD,x+1,y,1,1],[MUSTARD,x+3,y,1,1],[MUSTARD,x+5,y,1,1],[MUSTARD,x+7,y,1,1]];
+const cookie  = (x, y) => [[DOUGH,x+1,y,4,1],[DOUGH,x,y+1,6,4],[DOUGH,x+1,y+5,4,1],[CHOCO,x+1,y+1,1,1],[CHOCO,x+4,y+2,1,1],[CHOCO,x+2,y+3,1,1],[CHOCO,x+4,y+4,1,1]];
+const ebifry  = (x, y) => [[BATTER,x+1,y,6,1],[BATTER,x,y+1,7,1],[BATTER,x+1,y+2,6,1],[CONE_D,x+2,y,1,1],[CONE_D,x+5,y+1,1,1],[SHRIMP,x+7,y,2,1],[SHRIMP,x+7,y+2,2,1],[SHRIMP,x+8,y+1,1,1]];
+const dango   = (x, y) => [[DANGO_P,x,y,3,3],[RICE,x,y+3,3,3],[DANGO_G,x,y+6,3,3],[STICK,x+1,y+9,1,3]];
+const taiyaki = (x, y) => [[DOUGH,x+1,y,5,5],[DOUGH,x,y+1,1,3],[DOUGH,x+6,y+1,1,3],[DOUGH,x+7,y,1,5],[NORI,x+1,y+1,1,1],[HOLE,x+3,y+2,1,1],[HOLE,x+5,y+1,1,1],[HOLE,x+5,y+3,1,1]];
+const melonpan = (x, y) => [[MELONPAN,x+2,y,3,1],[MELONPAN,x+1,y+1,5,1],[MELONPAN,x,y+2,7,3],[MELON_L,x+2,y+2,1,3],[MELON_L,x+4,y+2,1,3],[MELON_L,x,y+3,7,1]];
+const curry = (x, y, s) => [[RICE,x-1,y+4,14,1], ...trim([[RICE,x,y+1,6,3],[CURRY,x+6,y+1,6,3],[CARROT,x+7,y+1,1,1],[MUSTARD,x+10,y+2,1,1]], 'left', x + s * 4)];
+const gyoza = (x, y, s) => { const r = [[RICE,x-1,y+3,13,1]];
+  for (let i = s; i < 3; i++) r.push([GYOZA,x+i*4,y+1,3,2],[GYOZA,x+i*4+1,y,1,1],[DOUGH,x+i*4,y+2,3,1]);
+  return r; };
+const fries = (x, y, s) => { const r = [[FRYBOX,x,y+3,6,4],[MUSTARD,x+2,y+4,2,1]];
+  [[1,0],[2,1],[3,0],[4,1],[2,-1],[4,-1]].slice(0, 6 - s * 2).forEach(([dx, dy]) => r.push([MUSTARD,x+dx,y+dy,1,3]));
+  return r; };
+const FOODS3 = [
+  { name: 'おすし', desc: 'まぐろのにぎりを、ひと口ずつ', seq: eatHeld(sushi, 7, 4, 'left', heart(9, -6)) },
+  { name: 'ホットドッグ', desc: 'マスタードたっぷり、はしからがぶり', seq: eatHeld(hotdog, 9, 4, 'left', [...spark(-2, -3), ...spark(24, -5)]) },
+  { name: 'クッキー', desc: 'チョコチップクッキーを、さくさく', seq: eatHeld(cookie, 6, 6, 'left', [[DOUGH, 8, 13, 1, 1], [DOUGH, 15, 14, 1, 1], ...heart(9, -6)]) },
+  { name: 'えびフライ', desc: 'さくっと食べて、しっぽだけ残る', seq: eatHeld(ebifry, 7, 3, 'left', [[SHRIMP, 22, 10, 2, 1], [SHRIMP, 22, 12, 2, 1], [SHRIMP, 23, 11, 1, 1]]) },
+  { name: 'カレーライス', desc: 'スプーンで、ごはんとカレーをいっしょに', seq: eatPlate(s => curry(5, 11, s), [[SPOON, 13, 7, 6, 1], [RICE, 12, 6, 1, 1], [CURRY, 13, 6, 1, 1]], [...steam(10, 8, 0), ...heart(9, -6)]) },
+  { name: 'ぎょうざ', desc: 'こんがりぎょうざを、ひとつずつ', seq: eatPlate(s => gyoza(6, 12, s), [[GYOZA, 12, 6, 3, 2], [DOUGH, 12, 7, 3, 1]], [...spark(-2, -3), ...spark(24, -4)]) },
+  { name: 'おだんご', desc: 'ピンク・しろ・みどりを、上から順番に', seq: eatHeld(dango, 3, 9, 'top', [[STICK, 17, 10, 1, 3], ...heart(9, -6)]) },
+  { name: 'たいやき', desc: 'あたまから、ぱくっといく派', seq: eatHeld(taiyaki, 8, 5, 'left', [[DOUGH, 23, 9, 1, 3], ...spark(-2, -3)]) },
+  { name: 'メロンパン', desc: 'さくさくのメロンパンを、ほおばる', seq: eatHeld(melonpan, 7, 5, 'left', [[MELONPAN, 9, 13, 1, 1], ...heart(9, -6)]) },
+  { name: 'ポテト', desc: '1本ずつつまんで、ぱくぱく', seq: eatPlate(s => fries(16, 8, s), [[MUSTARD, 12, 4, 1, 4]], [...spark(-2, -3), ...spark(24, -5)]) },
+];
+
+// ── 食べ方のパターン ──
+const DISH = '#4a6fb5', WATER = '#9fd3f0', FIRE1 = '#e8452f', FIRE2 = '#f39c34', FIRE3 = '#f5d76e', UME = '#c0392b';
+const ricebowl = (x, y, s) => { const r = [[DISH,x,y+2,8,2],[DISH,x+1,y+4,6,1],[STEAM,x+3,y+3,2,1]];
+  const w = [6, 4, 2, 0][s]; if (w) r.push([RICE, x + 4 - w / 2, y, w, 2]); return r; };
+const sweat = (x, y) => [[WATER,x,y,1,2],[WATER,x-1,y+1,1,1]];
+const glass = (x, y) => [[WATER,x,y,3,4],[RICE,x,y,3,1]];
+const fire  = (x, y, k) => k ? [[FIRE1,x,y,4,3],[FIRE2,x+4,y,3,3],[FIRE3,x+7,y+1,2,1],[FIRE1,x+2,y-1,2,1]] : [[FIRE1,x,y,3,3],[FIRE2,x+3,y+1,3,2],[FIRE3,x+6,y+1,2,1]];
+const puff  = [[O,2,8,2,3],[O,20,8,2,3]];                     // ふくらんだほっぺ（腕の下でふくらむ）
+const belly = [[O,1,8,3,4],[O,20,8,3,4],[O,6,12,12,1]];        // ふくらんだおなか
+const freeze = [[SPRINK,6,-4,1,2],[SPRINK,11,-5,1,2],[SPRINK,16,-4,1,2]];
+const WAYS = [
+  { name: 'ガツガツ', desc: 'ごはんを、すごいいきおいでかきこむ', seq: (() => {
+    const s = [[fig({ extra: ricebowl(8, 10, 0) }), 500]];
+    for (let i = 0; i < 9; i++) { const st = Math.min(3, Math.floor(i / 3) + 1);
+      s.push([fig({ l: 'up', r: 'up', mouth: i % 2 ? 'closed' : 'open', squash: i % 2, extra: [...ricebowl(8, 8 + (i % 2), st - (i % 3 === 2 ? 0 : 1)), ...(i % 3 === 0 ? [[RICE, 10, 6, 1, 1], [RICE, 14, 5, 1, 1]] : [])] }), 110]); }
+    s.push([fig({ eyes: 'happy', cheek: true, mouth: 'closed', extra: [...ricebowl(8, 10, 3), [RICE, 13, 7, 1, 1]] }), 900], [fig({ eyes: 'happy' }), 400]);
+    return s; })() },
+
+  { name: 'フーフー', desc: 'あついので、ふーふーしてから食べる', seq: (() => {
+    const s = [[fig({ extra: [...takoyaki(5, 11, 2), ...steam(10, 6, 0)] }), 500], [fig({ r: 'up', extra: [[TAKO, 15, 6, 3, 3], ...steam(15, 3, 1)] }), 400]];
+    for (let k = 0; k < 3; k++) s.push([fig({ r: 'up', mouth: 'open', extra: [[TAKO, 15, 6, 3, 3], [STEAM, 13, 7, 1, 1], [STEAM, 11, 6, 1, 1]] }), 260], [fig({ r: 'up', mouth: 'closed', extra: [[TAKO, 15, 6, 3, 3], ...steam(15, 4 - k, k)] }), 260]);
+    s.push([fig({ r: 'up', mouth: 'open', extra: [[TAKO, 12, 5, 3, 3]] }), 220], [fig({ eyes: 'closed', mouth: 'closed', extra: [...sweat(21, 0)] }), 300],
+           [fig({ eyes: 'happy', mouth: 'open', squash: 1, extra: [...steam(11, 3, 0), ...sweat(21, 1)] }), 300], [fig({ eyes: 'happy', cheek: true, mouth: 'closed' }), 800]);
+    return s; })() },
+
+  { name: 'からい！', desc: 'カレーがからくて、口から火がでる', seq: (() => {
+    const s = [[fig({ extra: curry(5, 11, 0) }), 500], [fig({ r: 'up', mouth: 'open', extra: [...curry(5, 11, 1), [SPOON, 13, 7, 6, 1], [CURRY, 13, 6, 1, 1]] }), 280],
+               [fig({ mouth: 'closed', extra: curry(5, 11, 1) }), 400], [fig({ eyes: 'closed', cheek: true, extra: [...curry(5, 11, 1), ...sweat(3, 1)] }), 300]];
+    for (let k = 0; k < 4; k++) s.push([fig({ eyes: 'closed', cheek: true, mouth: 'open', dy: k % 2 ? 0 : -1, l: 'hi', r: 'hi', extra: [...fire(10, 7, k % 2),...sweat(3, 1 + k % 2), ...sweat(21, k % 2)] }), 180]);
+    s.push([fig({ r: 'up', mouth: 'open', extra: glass(12, 4) }), 600], [fig({ eyes: 'happy', mouth: 'closed', extra: sweat(21, 1) }), 700]);
+    return s; })() },
+
+  { name: 'すっぱい', desc: 'うめぼしで、ぎゅーっとしかめっつら', seq: (() => {
+    const s = [[fig({ r: 'up', extra: [[UME, 17, 6, 2, 2], [LEAF, 17, 5, 1, 1]] }), 600], [fig({ r: 'up', mouth: 'open', extra: [[UME, 12, 6, 2, 2]] }), 260], [fig({ mouth: 'closed' }), 300]];
+    for (let k = 0; k < 8; k++) s.push([fig({ eyes: 'closed', squash: 2, dx: k % 2 ? 1 : -1, mouth: 'closed', extra: [[SPRINK, -2, 4 + (k % 2), 1, 3], [SPRINK, 25, 4 + (k % 2), 1, 3]] }), 90]);
+    s.push([fig({ eyes: 'closed', squash: 1, mouth: 'closed' }), 500], [fig({ eyes: 'happy', mouth: 'closed' }), 700]);
+    return s; })() },
+
+  { name: 'つまみぐい', desc: 'まわりを見て…こっそりひとつ', seq: [
+    [fig({ extra: cookie(15, 10) }), 500], [fig({ look: -1, extra: cookie(15, 10) }), 450], [fig({ look: 1, extra: cookie(15, 10) }), 450], [fig({ look: -1, extra: cookie(15, 10) }), 300],
+    [fig({ r: 'up', mouth: 'open', dx: 1, extra: cookie(12, 4) }), 160], [fig({ mouth: 'closed', extra: puff }), 300],
+    [fig({ eyes: 'wink', mouth: 'closed', extra: [...puff, ...note(25, -6)] }), 500], [fig({ eyes: 'happy', mouth: 'closed', extra: [...puff, ...note(27, -9)] }), 500],
+    [fig({ eyes: 'happy', mouth: 'closed', squash: 1 }), 300], [fig({ eyes: 'happy', cheek: true }), 700] ] },
+
+  { name: 'おなかいっぱい', desc: '食べすぎて、おなかがぽっこり', seq: (() => {
+    const s = [];
+    for (let k = 0; k < 4; k++) s.push([fig({ l: 'up', r: 'up', mouth: k % 2 ? 'closed' : 'open', extra: ricebowl(8, 10, Math.min(3, k)) }), 250]);
+    s.push([fig({ eyes: 'happy', mouth: 'closed', extra: [...belly, ...ricebowl(8, 12, 3)] }), 700],
+           [fig({ eyes: 'happy', cheek: true, mouth: 'open', squash: 1, extra: [...belly, [STEAM, 12, 4, 2, 1]] }), 500],
+           [fig({ eyes: 'closed', cheek: true, extra: [...belly, ...heart(9, -6)] }), 900], [fig({ eyes: 'closed', extra: [...belly, ...zee(22, -3, ZZ())] }), 800]);
+    return s; })() },
+
+  { name: 'ひとくちで', desc: 'ハンバーガーを、まるごとひとくち！', seq: [
+    [fig({ extra: burger(16, 8) }), 600], [fig({ eyes: 'happy', extra: [...burger(16, 8), ...spark(24, -3)] }), 400],
+    [fig({ r: 'hi', mouth: 'open', extra: burger(12, 3) }), 300], [fig({ mouth: 'closed', extra: puff }), 200],
+    [fig({ mouth: 'closed', squash: 1, extra: puff }), 220], [fig({ mouth: 'closed', extra: puff }), 220], [fig({ mouth: 'closed', squash: 1, extra: puff }), 220],
+    [fig({ eyes: 'happy', mouth: 'closed', extra: [[O, 3, 8, 1, 3], [O, 20, 8, 1, 3]] }), 300], [fig({ eyes: 'happy', cheek: true, mouth: 'open', extra: heart(9, -6) }), 900] ] },
+
+  { name: 'あたまキーン', desc: 'アイスをいそいで食べて、キーン！', seq: (() => {
+    const s = [[fig({ extra: softcream(16, 6) }), 400]];
+    for (let k = 0; k < 4; k++) s.push([fig({ r: 'up', mouth: k % 2 ? 'closed' : 'open', extra: trim(softcream(13, 1), 'top', 1 + k * 2) }), 130]);
+    s.push([fig({ eyes: 'closed', l: 'hi', r: 'hi', extra: [...freeze, ...bang(23, -8)] }), 300]);
+    for (let k = 0; k < 6; k++) s.push([fig({ eyes: 'closed', l: 'hi', r: 'hi', dx: k % 2 ? 1 : -1, extra: freeze }), 90]);
+    s.push([fig({ eyes: 'closed', squash: 1 }), 500], [fig({ eyes: 'happy' }), 600]);
+    return s; })() },
+
+  { name: 'おすそわけ', desc: 'はんぶんこして、どうぞ', seq: [
+    [fig({ extra: cookie(16, 9) }), 500], [fig({ r: 'up', eyes: 'happy', extra: cookie(13, 5) }), 400],
+    [fig({ l: 'up', r: 'up', extra: [...trim(cookie(10, 5), 'left', 13), [DOUGH, 8, 5, 3, 1], [DOUGH, 7, 6, 4, 4]] }), 300],
+    [fig({ l: 'up', r: 'up', eyes: 'happy', extra: [[DOUGH, -2, 5, 3, 1], [DOUGH, -3, 6, 4, 4], [CHOCO, -2, 7, 1, 1], ...trim(cookie(17, 5), 'left', 20)] }), 700],
+    [fig({ eyes: 'happy', cheek: true, l: 'up', extra: [[DOUGH, -2, 5, 3, 1], [DOUGH, -3, 6, 4, 4], ...heart(-4, -4)] }), 900],
+    [fig({ r: 'up', mouth: 'open', extra: trim(cookie(12, 5), 'left', 15) }), 260], [fig({ eyes: 'happy', mouth: 'closed', squash: 1 }), 300], [fig({ eyes: 'happy', cheek: true }), 600] ] },
+
+  { name: 'いただきます', desc: '手をあわせて、いただきます→ごちそうさま', seq: [
+    [fig({ extra: ricebowl(8, 10, 0) }), 500], [fig({ l: 'up', r: 'up', eyes: 'closed', extra: ricebowl(8, 10, 0) }), 400],
+    [fig({ l: 'up', r: 'up', eyes: 'closed', squash: 2, extra: [...ricebowl(8, 10, 0), ...spark(-2, -2), ...spark(24, -3)] }), 600],
+    [fig({ mouth: 'open', r: 'up', extra: ricebowl(8, 10, 1) }), 250], [fig({ mouth: 'closed', eyes: 'happy', extra: ricebowl(8, 10, 2) }), 250],
+    [fig({ mouth: 'open', r: 'up', extra: ricebowl(8, 10, 2) }), 250], [fig({ mouth: 'closed', eyes: 'happy', extra: ricebowl(8, 10, 3) }), 400],
+    [fig({ l: 'up', r: 'up', eyes: 'closed', squash: 2, extra: [...ricebowl(8, 10, 3), ...heart(9, -6)] }), 900], [fig({ eyes: 'happy', cheek: true }), 500] ] },
+];
+
+// ── いろいろな動き その2（46〜65） ──
+const RED = '#e8452f', SCARF = '#d84a4a', BOX = '#c9a06a', BOX_D = '#a87f4f', BOOK = '#4a6fb5', UMB = '#e0475b', UMB_D = '#b8364a', BALL = '#e0475b', CAN = '#5a8fd0', IRON = '#5b5f6a';
+const vein  = (x, y) => [[RED,x,y,1,2],[RED,x+2,y,1,2],[RED,x-1,y+2,2,1],[RED,x+2,y+2,2,1]];   // おこりマーク
+const drop  = (x, y) => [[WATER,x,y,1,2]];
+const sun   = (x, y) => [[GOLD,x+1,y+1,4,4],[GOLD,x+2,y,2,1],[GOLD,x+2,y+5,2,1],[GOLD,x,y+2,1,2],[GOLD,x+5,y+2,1,2]];
+const scarf = (t) => [[SCARF,3,t+7,18,2],[SCARF,15,t+9,2,3],[RICE,6,t+7,1,2],[RICE,10,t+7,1,2]];
+const book  = (y) => [[BOOK,7,y,10,5],[RICE,8,y,4,4],[RICE,12,y,4,4],[STEAM,9,y+1,2,1],[STEAM,13,y+1,2,1],[STEAM,9,y+2,2,1],[STEAM,13,y+2,2,1]];
+const umbrella = [[UMB,4,-13,16,2],[UMB,0,-11,24,2],[UMB,-2,-9,28,2],[UMB_D,4,-9,2,2],[UMB_D,18,-9,2,2],[STICK,22,-7,1,12]];
+const rain  = k => [[0,-5],[27,-3],[-4,4],[28,8],[-3,12]].map(([x, y]) => [WATER, x, y + (k % 3) * 2, 1, 2]);
+const ball  = (x, y) => [[BALL,x,y,3,3],[RICE,x,y,1,1]];
+const can   = [[CAN,21,6,5,4],[CAN,26,5,3,1],[CAN,22,5,2,1]];
+const flower = h => [[LEAF,29,16-h,1,h],...(h >= 3 ? [[PINK,28,15-h,3,1],[PINK,29,14-h,1,3],[GOLD,29,15-h,1,1]] : [[LEAF,28,15,1,1]])];
+const dumbbell = y => [[IRON,-1,y,26,1],[NORI,-3,y-1,2,3],[NORI,25,y-1,2,3]];
+const legs2 = [[O,4,14,2,2],[O,8,14,2,2],[O,14,14,2,2],[O,18,14,2,2]];   // のびたときに足をのばす
+const orbit = k => { const p = [[-4,-4],[10,-9],[24,-4],[10,-6]][k % 4], q = [[24,-4],[10,-6],[-4,-4],[10,-9]][k % 4]; return [...spark(...p), ...spark(...q)]; };
+const MOVES2 = [
+  { name: 'くしゃみ', desc: 'は…は…はっくしょん！', seq: [
+    [fig(), 600], [fig({ eyes: 'closed', mouth: 'open', dy: -1 }), 400], [fig({ eyes: 'closed', mouth: 'open', dy: -2, l: 'up', r: 'up' }), 500],
+    [fig({ eyes: 'closed', mouth: 'open', squash: 2, dx: -1, extra: [[STEAM,9,8,1,1],[STEAM,13,9,1,1],[STEAM,11,10,1,1],[STEAM,15,8,1,1],...bang(23,-8)] }), 300],
+    [fig({ eyes: 'closed', squash: 1 }), 300], [fig({ eyes: 'happy', mouth: 'closed' }), 700] ] },
+  { name: 'あくび', desc: 'ふぁ〜…ねむい', seq: [
+    [fig(), 500], [fig({ eyes: 'closed', l: 'up', r: 'up', dy: -1, extra: [[K,10,6,4,3]] }), 900], [fig({ eyes: 'closed', l: 'hi', r: 'hi', dy: -1, extra: [[K,10,6,4,4], ...drop(19, 3)] }), 700],
+    [fig({ eyes: 'closed', mouth: 'closed', extra: drop(19, 5) }), 500], [fig({ eyes: 'closed', squash: 1 }), 400], [fig(), 500] ] },
+  { name: 'のびー', desc: 'うーんと、せのび', seq: [
+    [fig(), 500], [fig({ l: 'up', r: 'up', eyes: 'closed' }), 300], [fig({ l: 'hi', r: 'hi', eyes: 'closed', dy: -2, extra: legs2 }), 900],
+    [fig({ l: 'hi', r: 'hi', eyes: 'closed', dy: -2, dx: -1, extra: legs2 }), 400], [fig({ l: 'hi', r: 'hi', eyes: 'closed', dy: -2, dx: 1, extra: legs2 }), 400],
+    [fig({ squash: 1, eyes: 'happy' }), 300], [fig({ eyes: 'happy', cheek: true }), 600] ] },
+  { name: 'おじぎ', desc: 'ぺこり。よろしくおねがいします', seq: [
+    [fig(), 600], [fig({ squash: 2, eyes: 'closed' }), 250], [fig({ squash: 3, eyes: 'closed' }), 800], [fig({ squash: 1, eyes: 'closed' }), 200],
+    [fig({ eyes: 'happy', cheek: true, extra: [...spark(-2, -2), ...spark(24, -4)] }), 900] ] },
+  { name: 'びっくり', desc: 'わっ！とおどろいてとびあがる', seq: [
+    [fig(), 700], [fig({ eyes: 'big', mouth: 'open', dy: -4, l: 'hi', r: 'hi', lift: [0,1,2,3], extra: bang(23, -12) }), 250],
+    [fig({ eyes: 'big', mouth: 'open', dy: -2, l: 'hi', r: 'hi', extra: bang(23, -10) }), 300], [fig({ eyes: 'big', mouth: 'closed', squash: 1, extra: [...sweat(21, 0)] }), 500],
+    [fig({ eyes: 'big', extra: sweat(21, 1) }), 500], [fig({ eyes: 'closed' }), 200], [fig({ eyes: 'happy' }), 600] ] },
+  { name: 'ぷんぷん', desc: 'おこって、じたばた', seq: (() => { const s = [[fig(), 500]];
+    for (let k = 0; k < 6; k++) s.push([fig({ eyes: 'angry', mouth: 'closed', lift: k % 2 ? [0, 2] : [1, 3], l: k % 2 ? 'up' : 'side', r: k % 2 ? 'side' : 'up',
+      extra: [...vein(18, -3), [STEAM, 2 + (k % 2), -4 - (k % 3), 2, 1], [STEAM, 20 - (k % 2), -5 - (k % 3), 2, 1]] }), 200]);
+    s.push([fig({ eyes: 'angry', squash: 1, extra: vein(18, -2) }), 500], [fig({ eyes: 'closed' }), 400], [fig(), 400]); return s; })() },
+  { name: 'えーん', desc: 'なみだがぽろぽろ…でも元気になる', seq: (() => { const s = [[fig(), 400]];
+    for (let k = 0; k < 6; k++) s.push([fig({ eyes: 'closed', mouth: 'open', squash: k % 2, extra: [...drop(6, 5 + (k % 3) * 2), ...drop(17, 6 + ((k + 1) % 3) * 2), ...drop(4, 9 + (k % 2) * 3), ...drop(19, 10 + ((k + 1) % 2) * 3)] }), 250]);
+    s.push([fig({ eyes: 'closed', mouth: 'closed' }), 400], [fig({ eyes: 'happy', cheek: true, l: 'up', r: 'up', extra: [...spark(-2, -2), ...spark(24, -3)] }), 900]); return s; })() },
+  { name: 'てれてれ', desc: 'ほっぺを赤くして、もじもじ', seq: (() => { const s = [[fig(), 400]];
+    for (let k = 0; k < 6; k++) s.push([fig({ eyes: 'happy', cheek: true, look: k % 2 ? 1 : -1, dx: k % 2 ? 1 : -1, l: 'up', r: 'up', extra: heart(k % 2 ? 22 : -4, -6 - (k % 3)) }), 330]);
+    s.push([fig({ eyes: 'closed', cheek: true }), 600]); return s; })() },
+  { name: 'さむい', desc: 'マフラーをまいて、ぶるぶる', seq: (() => { const s = [];
+    for (let k = 0; k < 8; k++) s.push([fig({ eyes: 'closed', mouth: 'closed', dx: k % 2 ? 1 : -1, squash: 1, extra: [...scarf(1), [SPRINK, -3, 2 + k % 2, 1, 3], [SPRINK, 26, 3 - k % 2, 1, 3], ...(k % 4 < 2 ? [[STEAM, 11, 12, 2, 1]] : [])] }), 150]);
+    s.push([fig({ eyes: 'happy', cheek: true, extra: scarf(0) }), 900]); return s; })() },
+  { name: 'あつい', desc: 'おひさまが、じりじり…あせだく', seq: (() => { const s = [];
+    for (let k = 0; k < 6; k++) s.push([fig({ eyes: 'closed', mouth: 'open', squash: k % 2, r: k % 2 ? 'up' : 'hi', extra: [...sun(-7, -14), ...sweat(3, 1 + (k % 3)), ...sweat(21, 2 + ((k + 1) % 3)), ...drop(12, 13 + (k % 2))] }), 300]);
+    s.push([fig({ eyes: 'happy', extra: sun(-7, -14) }), 600]); return s; })() },
+  { name: 'かくれんぼ', desc: 'はこの中にかくれて、ちらっ', seq: (() => {
+    const bx = [[BOX,-2,8,28,8],[BOX_D,-2,8,28,1],[BOX_D,11,9,2,7]];
+    return [[fig({ extra: bx }), 600], [fig({ dy: 3, eyes: 'closed', nolegs: true, extra: bx }), 300], [fig({ dy: 7, nolegs: true, extra: bx }), 900], [fig({ dy: 5, look: -1, nolegs: true, extra: bx }), 500],
+            [fig({ dy: 5, look: 1, nolegs: true, extra: bx }), 500], [fig({ dy: 7, nolegs: true, extra: bx }), 600], [fig({ dy: -2, eyes: 'happy', l: 'hi', r: 'hi', extra: [...bx, ...spark(-2, -6), ...spark(24, -7)] }), 800], [fig({ extra: bx }), 500]]; })() },
+  { name: 'うたう', desc: 'ゆらゆら歌って、音符がふわふわ', seq: (() => { const s = [];
+    for (let k = 0; k < 8; k++) s.push([fig({ eyes: 'closed', mouth: k % 2 ? 'open' : 'closed', dx: k % 4 < 2 ? -1 : 1, extra: [...note(22, -4 - (k % 4) * 2), ...(k % 4 >= 2 ? note(-4, -8 - (k % 2) * 2) : [])] }), 300]);
+    return s; })() },
+  { name: '本を読む', desc: 'ページをめくって、ふむふむ', seq: (() => { const s = [];
+    for (let k = 0; k < 3; k++) s.push([fig({ l: 'up', r: 'up', look: 0, extra: book(8) }), 700], [fig({ l: 'up', r: 'up', eyes: 'closed', extra: book(8) }), 120],
+      [fig({ l: 'up', r: 'hi', extra: [...book(8), [RICE, 14, 5, 3, 3]] }), 250]);
+    s.push([fig({ l: 'up', r: 'up', eyes: 'happy', extra: [...book(8), ...bang(23, -8)] }), 800]); return s; })() },
+  { name: 'かさ', desc: 'あめの日に、かさをさしてるんるん', seq: (() => { const s = [];
+    for (let k = 0; k < 9; k++) s.push([fig({ r: 'up', eyes: k % 3 === 2 ? 'happy' : 'open', lift: k % 2 ? [0, 2] : [1, 3], dx: k % 2, extra: [...umbrella, ...rain(k)] }), 250]);
+    return s; })() },
+  { name: 'ボールあそび', desc: 'あたまでポンポン、リフティング', seq: (() => { const s = [], ys = [-4, -8, -11, -12, -11, -8];
+    for (let k = 0; k < 12; k++) { const y = ys[k % 6]; s.push([fig({ dy: y === -4 ? -1 : 0, look: 0, eyes: y < -10 ? 'open' : 'happy', extra: ball(10, y) }), 130]); }
+    s.push([fig({ eyes: 'big', extra: ball(26, 12) }), 400], [fig({ eyes: 'happy', extra: ball(26, 13) }), 500]); return s; })() },
+  { name: '水やり', desc: 'おはなに水をあげると、ぐんぐん', seq: (() => { const s = [[fig({ r: 'up', extra: [...can, ...flower(1)] }), 500]];
+    for (let k = 0; k < 6; k++) s.push([fig({ r: 'up', dx: -1, extra: [...can, ...drop(28, 7 + (k % 2) * 2), ...drop(27, 9 - (k % 2) * 2), ...flower(1 + Math.floor(k / 2) * 2)] }), 250]);
+    s.push([fig({ eyes: 'happy', cheek: true, extra: [...flower(6), ...heart(17, -6)] }), 900]); return s; })() },
+  { name: 'きんトレ', desc: 'ダンベルを、よいしょ、よいしょ', seq: (() => { const s = [[fig({ extra: dumbbell(7) }), 400]];
+    for (let k = 0; k < 4; k++) s.push([fig({ l: 'up', r: 'up', eyes: 'angry', squash: 1, extra: dumbbell(5) }), 300], [fig({ l: 'hi', r: 'hi', eyes: 'closed', dy: -1, extra: [...dumbbell(-5), ...(k > 1 ? sweat(21, 1) : [])] }), 400]);
+    s.push([fig({ eyes: 'happy', extra: [...dumbbell(7), ...sweat(21, 2), ...spark(-2, -3)] }), 800]); return s; })() },
+  { name: 'めがまわる', desc: 'くるくる回って、×の目で星がぐるぐる', seq: (() => { const s = [];
+    for (let k = 0; k < 6; k++) s.push([fig({ look: k % 2 ? 1 : -1, dx: [0, 1, 0, -1][k % 4], l: k % 2 ? 'up' : 'side', r: k % 2 ? 'side' : 'up' }), 140]);
+    for (let k = 0; k < 8; k++) s.push([fig({ eyes: 'dizzy', dx: k % 2 ? 1 : -1, squash: k % 2, extra: orbit(k) }), 220]);
+    s.push([fig({ eyes: 'closed', squash: 1 }), 400], [fig({ eyes: 'happy' }), 500]); return s; })() },
+  { name: 'シャボン玉', desc: 'ふーっとふくと、シャボン玉がふわり', seq: (() => { const s = [[fig({ r: 'up', extra: [[STICK, 19, 4, 3, 1]] }), 500]];
+    for (let k = 0; k < 8; k++) s.push([fig({ r: 'up', mouth: k % 4 === 0 ? 'open' : 'closed', eyes: k > 3 ? 'happy' : 'open',
+      extra: [[STICK, 19, 4, 3, 1], ...bubble(22, 1 - k, 2), ...(k > 2 ? bubble(25, 4 - (k - 3) * 2, 3) : []), ...(k > 4 ? bubble(-5, 2 - (k - 5) * 2, 2) : [])] }), 300]);
+    return s; })() },
+  { name: 'ピース', desc: 'ウインクして、ピース！', seq: [
+    [fig(), 600], [fig({ r: 'up' }), 150], [fig({ r: 'hi', eyes: 'wink', cheek: true, extra: [[O, 21, -6, 1, 2], [O, 23, -6, 1, 2], ...spark(-3, -3)] }), 700],
+    [fig({ r: 'hi', eyes: 'wink', cheek: true, dy: -1, extra: [[O, 21, -7, 1, 2], [O, 23, -7, 1, 2], ...spark(-2, -6), ...spark(25, -10)] }), 700], [fig({ eyes: 'happy' }), 500] ] },
+];
+
+// ── いろいろな動き その3（66〜95） ──
+const rep = (n, ms, f) => Array.from({ length: n }, (_, k) => [f(k), ms]);
+const PURPLE = '#9b6bd6', GREEN = '#5aa35a', WOOD = '#c98a4a';
+const catEars = [[O,5,-3,2,1],[O,4,-2,4,2],[O,17,-3,2,1],[O,16,-2,4,2],[PINK,5,-2,2,1],[PINK,17,-2,2,1]];
+const catMouth = [[K,10,6,1,1],[K,11,7,1,1],[K,12,6,1,1],[K,13,7,1,1],[K,14,6,1,1]];
+const bunny = t => [[O,6,t-8,2,8],[O,16,t-8,2,8],[PINK,6,t-6,1,5],[PINK,17,t-6,1,5]];
+const shades = [[K,4,2,16,1],[K,5,2,5,3],[K,14,2,5,3],[RICE,6,2,1,1],[RICE,15,2,1,1]];
+const tophat = y => [[K,7,y-5,10,5],[K,4,y,16,1],[RED,7,y-1,10,1]];
+const firework = (x, y, k, c) => k === 0 ? [[c,x,y,1,2]] : k === 1 ? [[c,x,y-1,1,3],[c,x-1,y,3,1]] :
+  [[c,x,y-4,1,2],[c,x,y+3,1,2],[c,x-4,y,2,1],[c,x+3,y,2,1],[c,x-3,y-3,1,1],[c,x+3,y-3,1,1],[c,x-3,y+3,1,1],[c,x+3,y+3,1,1]];
+const flake = (x, y) => [[RICE,x,y,1,1],[RICE,x-1,y+1,3,1],[RICE,x,y+2,1,1]];
+const leafs = k => [[-4,2],[8,-6],[20,-2],[-2,10]].map(([x, y], i) => [LEAF, x + ((k + i * 3) % 8) * 4 - 6, y + (k % 2), 2, 1]);
+const ghost = [[RICE,3,-1,18,14],[RICE,3,13,3,2],[RICE,9,13,3,2],[RICE,15,13,3,2],[RICE,18,13,3,2],[K,8,4,2,2],[K,14,4,2,2]];
+const wand = k => [[STICK,22,-2,1,7], ...spark(21, -5), ...(k % 2 ? [...spark(26, -9), ...spark(15, -8)] : [...spark(27, -2), ...spark(18, -11)])];
+const guitar = [[WOOD,9,7,8,6],[K,12,9,2,2],[STICK,17,9,9,1],[STICK,25,8,2,3]];
+const drum = [[RED,6,11,12,5],[RICE,6,10,12,1],[GOLD,6,13,12,1]];
+const camera = [[IRON,10,3,8,6],[K,12,4,4,4],[STEAM,13,5,2,2],[RICE,16,2,2,1]];
+const letter = open => [[RICE,7,6,10,6],[STEAM,7,6,10,1],[STEAM,8,7,1,1],[STEAM,15,7,1,1],[STEAM,9,8,6,1], ...(open ? heart(10, 0) : [[PINK,11,8,2,2]])];
+const gift = lid => [[RED,7,9,10,7],[GOLD,11,9,2,7],[GOLD,7,11,10,1],[RED,6,9 - lid,12,2],[GOLD,11,9 - lid,2,2],[GOLD,9,7 - lid,2,2],[GOLD,13,7 - lid,2,2]];
+const balloon = y => [[PINK,22,y,5,5],[PINK,23,y-1,3,1],[PINK,23,y+5,3,1],[RICE,23,y+1,1,1],[STEAM,24,y+6,1,8]];
+const shoot = k => [[GOLD,28 - k * 4,-14 + k * 3,2,2], ...(k > 0 ? [[GOLD,30 - k * 4,-15 + k * 3,2,1]] : []), ...(k > 1 ? [[GOLD,32 - k * 4,-16 + k * 3,1,1]] : [])];
+const rod = [[STICK,22,3,1,1],[STICK,23,2,1,1],[STICK,24,1,1,1],[STICK,25,0,1,1],[STICK,26,-1,1,1],[STICK,27,-2,1,1],[STICK,28,-3,1,1]];
+const fish = (x, y) => [[CAN,x,y,4,2],[CAN,x+4,y-1,1,4],[K,x+1,y,1,1]];
+const pom = (x, y) => [[GOLD,x,y,3,3],[PINK,x+1,y+1,1,1],[PINK,x-1,y+1,1,1],[PINK,x+3,y+1,1,1]];
+const bulb = on => [[on ? GOLD : STEAM,10,-11,4,4],[on ? GOLD : STEAM,11,-12,2,1],[IRON,11,-7,2,1], ...(on ? [[GOLD,7,-12,1,1],[GOLD,16,-12,1,1],[GOLD,12,-15,1,2]] : [])];
+const party = [[GOLD,10,-7,4,7],[GOLD,11,-9,2,2],[PINK,10,-4,4,1],[PINK,11,-7,2,1],[RICE,11,-11,2,2]];
+const confetti = k => [[-4,-6,PINK],[2,-12,GOLD],[18,-11,SPRINK],[26,-7,GREEN],[-2,4,PURPLE],[27,5,PINK]].map(([x, y, c], i) => [c, x, y + ((k + i) % 4) * 2, 1, 1]);
+const speed = [[STEAM,-6,4,4,1],[STEAM,-5,8,3,1],[STEAM,-6,12,4,1]];
+const MOVES3 = [
+  { name: 'スキップ', desc: 'るんるん、かた足ずつスキップ', seq: rep(10, 200, k => fig({ dy: k % 2 ? 0 : -2, dx: [0, 1, 2, 1, 0, -1, -2, -1, 0, 0][k], lift: k % 2 ? [] : (k % 4 ? [0, 2] : [1, 3]), eyes: 'happy', extra: k % 4 === 0 ? note(24, -6) : [] })) },
+  { name: 'ねこのまね', desc: 'ねこみみで、にゃーん', seq: [[fig(), 400], [fig({ extra: catEars }), 400], ...rep(6, 280, k => fig({ eyes: k % 3 === 2 ? 'closed' : 'happy', l: k % 2 ? 'up' : 'side', r: k % 2 ? 'side' : 'up', extra: [...catEars, ...catMouth, ...(k > 2 ? heart(22, -7) : [])] }))] },
+  { name: 'うさぎのまね', desc: 'ながいおみみで、ぴょこぴょこ', seq: rep(10, 200, k => fig({ dy: k % 2 ? 0 : -2, squash: k % 2, eyes: 'happy', lift: k % 2 ? [] : [0, 1, 2, 3], extra: bunny(k % 2 ? 1 : -2) })) },
+  { name: 'サングラス', desc: 'サングラスをかけて、キメッ', seq: [[fig(), 500], [fig({ extra: [[K,5,-6,5,3],[K,14,-6,5,3],[K,4,-6,16,1]] }), 200], [fig({ extra: [[K,5,-2,5,3],[K,14,-2,5,3],[K,4,-2,16,1]] }), 150],
+    [fig({ extra: shades }), 300], [fig({ r: 'hi', mouth: 'closed', extra: [...shades, ...spark(25, -6)] }), 700], [fig({ r: 'hi', mouth: 'closed', dy: -1, extra: [...shades, ...spark(-3, -4), ...spark(26, -9)] }), 800]] },
+  { name: 'シルクハット', desc: 'ぼうしを上げて、ごあいさつ', seq: [[fig({ extra: tophat(-1) }), 600], [fig({ r: 'up', extra: tophat(-3) }), 250], [fig({ r: 'hi', eyes: 'closed', squash: 2, extra: tophat(-6) }), 800],
+    [fig({ r: 'up', eyes: 'happy', extra: tophat(-3) }), 250], [fig({ eyes: 'happy', cheek: true, extra: [...tophat(-1), ...spark(25, -4)] }), 800]] },
+  { name: 'はなび', desc: 'ドーン！夜空にはなびがひらく', seq: rep(12, 220, k => fig({ eyes: k > 3 ? 'happy' : 'open', look: 0, extra: [...firework(-1, -6, Math.min(2, Math.max(0, k - 1)) , GOLD), ...(k > 4 ? firework(26, -9, Math.min(2, k - 5), PINK) : []), ...(k > 7 ? firework(12, -12, Math.min(2, k - 8), SPRINK) : [])] })) },
+  { name: 'ゆき', desc: 'ゆきがふってきて、手でキャッチ', seq: [...rep(8, 260, k => fig({ l: k % 2 ? 'up' : 'side', r: k % 2 ? 'side' : 'up', look: k % 2 ? -1 : 1, extra: [...flake(-3, -10 + k * 2), ...flake(25, -13 + k * 2), ...flake(11, -14 + (k % 4) * 2)] })),
+    [fig({ eyes: 'happy', l: 'up', r: 'up', cheek: true, extra: [...flake(1, -1), ...flake(22, -1)] }), 800]] },
+  { name: 'かぜ', desc: 'ぴゅーっと、はっぱといっしょにふかれる', seq: rep(10, 200, k => fig({ dx: k % 3 === 0 ? 0 : -1, eyes: 'closed', l: 'up', squash: k % 2, extra: [...leafs(k), [STEAM, 26, 2 + (k % 3) * 3, 4, 1], [STEAM, 27, 9 - (k % 2) * 2, 3, 1]] })) },
+  { name: 'おばけごっこ', desc: 'シーツをかぶって、おばけだぞ〜', seq: [[fig(), 400], ...rep(8, 260, k => fig({ dy: k % 2 ? -1 : 0, nolegs: true, extra: [...ghost.map(([c, x, y, w, h]) => [c, x + (k % 4 < 2 ? 0 : 1), y + (k % 2 ? -1 : 0), w, h])] })), [fig({ eyes: 'happy', cheek: true }), 700]] },
+  { name: 'まほう', desc: 'まほうのステッキで、キラキラ', seq: [[fig({ r: 'up', extra: [[STICK, 21, 1, 1, 6]] }), 400], ...rep(8, 220, k => fig({ r: 'hi', eyes: k % 2 ? 'happy' : 'open', extra: wand(k) })), [fig({ eyes: 'happy', cheek: true, extra: heart(9, -6) }), 700]] },
+  { name: 'ギター', desc: 'ジャカジャーン！とひきがたり', seq: rep(10, 230, k => fig({ r: k % 2 ? 'up' : 'side', eyes: 'closed', mouth: k % 2 ? 'open' : 'closed', dx: k % 4 < 2 ? 0 : 1, extra: [...guitar, ...note(24 - (k % 3), -4 - (k % 4) * 2)] })) },
+  { name: 'たいこ', desc: 'ドンドン、たいこをたたく', seq: rep(10, 180, k => fig({ l: k % 2 ? 'hi' : 'up', r: k % 2 ? 'up' : 'hi', eyes: k > 5 ? 'happy' : 'open', squash: k % 2, extra: [...drum, ...(k % 2 ? [[STEAM, 2, 9, 2, 1]] : [[STEAM, 20, 9, 2, 1]])] })) },
+  { name: 'カメラ', desc: 'はい、チーズ！パシャ', seq: [[fig({ r: 'up', l: 'up', extra: camera }), 600], [fig({ r: 'up', l: 'up', eyes: 'closed', extra: camera }), 300],
+    [fig({ r: 'up', l: 'up', extra: [...camera, [RICE, 15, -2, 1, 3], [RICE, 13, 0, 5, 1], ...spark(20, -6), ...spark(8, -5)] }), 200], [fig({ eyes: 'happy', extra: [[RICE, 22, 4, 6, 6], [SPRINK, 23, 5, 4, 2], [GREEN, 23, 7, 4, 2]] }), 900]] },
+  { name: 'てがみ', desc: 'おてがみをあけると、ハート', seq: [[fig({ l: 'up', r: 'up', extra: letter(false) }), 700], [fig({ l: 'up', r: 'up', eyes: 'big', extra: letter(false) }), 400],
+    [fig({ l: 'up', r: 'up', extra: letter(true) }), 400], [fig({ l: 'up', r: 'up', eyes: 'happy', cheek: true, extra: [...letter(true), ...heart(18, -6)] }), 900]] },
+  { name: 'プレゼント', desc: 'はこをあけると、キラキラ', seq: [[fig({ extra: gift(0) }), 600], [fig({ eyes: 'happy', l: 'up', r: 'up', extra: gift(0) }), 400], [fig({ l: 'up', r: 'up', extra: gift(3) }), 200],
+    [fig({ eyes: 'big', l: 'hi', r: 'hi', dy: -1, extra: [...gift(6), ...spark(10, -4), ...spark(3, -8), ...spark(19, -9)] }), 600], [fig({ eyes: 'happy', cheek: true, l: 'hi', r: 'hi', extra: [...gift(6), ...heart(9, -10)] }), 800]] },
+  { name: 'ふうせん', desc: 'ふうせんで、ふわっとうく', seq: rep(10, 260, k => fig({ r: 'hi', dy: k < 3 ? 0 : -[1, 2, 3, 2, 3, 2, 1][k - 3] || 0, eyes: k > 3 ? 'happy' : 'open', lift: k > 3 ? [0, 1, 2, 3] : [], extra: balloon(-12 - (k > 3 ? 2 : 0)) })) },
+  { name: 'ながれぼし', desc: 'ながれぼしに、おねがいごと', seq: [...rep(6, 160, k => fig({ look: 1, extra: shoot(k) })), [fig({ eyes: 'closed', l: 'up', r: 'up', extra: spark(4, -6) }), 900], [fig({ eyes: 'happy', cheek: true, extra: heart(9, -6) }), 700]] },
+  { name: 'つり', desc: 'じっとまって…つれた！', seq: [[fig({ r: 'up', extra: [...rod, [STEAM, 29, -3, 1, 18]] }), 900], [fig({ r: 'up', eyes: 'closed', extra: [...rod, [STEAM, 29, -3, 1, 18]] }), 400],
+    [fig({ r: 'up', eyes: 'big', extra: [...rod, [STEAM, 29, -3, 1, 18], ...bang(23, -9)] }), 300], [fig({ r: 'hi', dy: -1, extra: [...rod, [STEAM, 29, -3, 1, 6], ...fish(27, 3)] }), 300],
+    [fig({ r: 'hi', eyes: 'happy', cheek: true, extra: [...rod, [STEAM, 29, -3, 1, 4], ...fish(27, 1), ...spark(-3, -4)] }), 900]] },
+  { name: 'あっち！', desc: 'なにかを見つけて、ゆびさし', seq: [[fig(), 500], [fig({ look: 1 }), 400], [fig({ look: 1, eyes: 'big', extra: bang(22, -8) }), 300],
+    [fig({ look: 1, r: 'up', extra: [[O, 24, 0, 4, 2], [O, 28, 0, 2, 1]] }), 900], [fig({ look: 1, r: 'up', dx: 1, extra: [[O, 24, 0, 4, 2], [O, 28, 0, 2, 1], ...spark(28, -5)] }), 600]] },
+  { name: 'ころぶ', desc: 'つまずいて、ころん。でも平気', seq: [[fig(), 500], [fig({ dx: 2, lift: [3], eyes: 'big' }), 250], [fig({ dx: 3, squash: 3, eyes: 'dizzy', l: 'up', r: 'up', extra: [...spark(4, -4), ...spark(18, -5)] }), 700],
+    [fig({ squash: 2, eyes: 'closed', extra: drop(19, 3) }), 400], [fig({ eyes: 'happy', l: 'hi', extra: spark(-3, -6) }), 700]] },
+  { name: 'おうえん', desc: 'ポンポンで、フレー！フレー！', seq: rep(10, 220, k => fig({ l: k % 2 ? 'hi' : 'up', r: k % 2 ? 'up' : 'hi', dy: k % 4 === 0 ? -2 : 0, eyes: 'happy', mouth: k % 2 ? 'open' : 'closed', extra: [...pom(k % 2 ? -1 : -1, k % 2 ? -5 : 0), ...pom(k % 2 ? 22 : 22, k % 2 ? 0 : -5)] })) },
+  { name: 'はくしゅ', desc: 'パチパチパチ、すごいね！', seq: [...rep(10, 140, k => fig({ l: k % 2 ? 'up' : 'side', r: k % 2 ? 'up' : 'side', eyes: 'happy', extra: k % 2 ? [[GOLD, -2, 1, 2, 1], [GOLD, 24, 1, 2, 1], [GOLD, -1, -1, 1, 1], [GOLD, 24, -1, 1, 1]] : [] })), [fig({ eyes: 'happy', cheek: true }), 600]] },
+  { name: 'ためいき', desc: 'はぁ〜…ちょっとつかれた', seq: [[fig(), 500], [fig({ eyes: 'closed', dy: -1 }), 500], [fig({ eyes: 'closed', squash: 2, mouth: 'open', extra: [[STEAM, 8, 8, 3, 1], [STEAM, 6, 9, 2, 1]] }), 500],
+    [fig({ eyes: 'closed', squash: 2, extra: [[STEAM, 2, 8, 3, 1], [STEAM, 0, 10, 2, 1]] }), 600], [fig({ eyes: 'closed', squash: 1 }), 500], [fig(), 500]] },
+  { name: 'ひらめき', desc: 'ピコーン！いいことおもいついた', seq: [[fig({ look: 1, r: 'up', extra: bulb(false) }), 700], [fig({ look: 1, r: 'up', eyes: 'closed', extra: bulb(false) }), 400],
+    [fig({ eyes: 'big', l: 'hi', r: 'hi', dy: -1, extra: bulb(true) }), 600], [fig({ eyes: 'happy', l: 'hi', r: 'hi', extra: [...bulb(true), ...spark(-3, -6), ...spark(25, -6)] }), 800]] },
+  { name: 'かんがえちゅう', desc: 'うーん…と考えて、てんてんてん', seq: [...rep(8, 300, k => fig({ look: 1, r: 'up', eyes: k % 4 === 3 ? 'closed' : 'open', extra: [[ZZ(), 15, -3, 1, 1], ...(k % 4 > 0 ? [[ZZ(), 18, -5, 2, 2]] : []), ...(k % 4 > 1 ? [[ZZ(), 21, -8, 3, 3]] : [])] })),
+    [fig({ eyes: 'happy', extra: bulb(true) }), 600]] },
+  { name: 'ハートをなげる', desc: 'えいっ！とハートをなげる', seq: [[fig({ eyes: 'happy', cheek: true, extra: heart(15, 4) }), 400], [fig({ r: 'hi', eyes: 'happy', cheek: true, extra: heart(21, -6) }), 200],
+    ...rep(4, 160, k => fig({ r: 'up', eyes: 'wink', cheek: true, extra: heart(24 + k * 2, -9 - k * 2) })), [fig({ eyes: 'happy', cheek: true, extra: [...heart(-5, -9), ...heart(26, -12)] }), 700]] },
+  { name: 'かけっこ', desc: 'いそいで、タタタタッ', seq: rep(12, 110, k => fig({ dx: 1, dy: k % 2 ? 0 : -1, lift: k % 2 ? [0, 2] : [1, 3], l: k % 2 ? 'up' : 'side', r: k % 2 ? 'side' : 'up', eyes: 'angry', extra: [...speed, ...(k % 4 === 0 ? sweat(21, 0) : [])] })) },
+  { name: 'なわとび', desc: 'ぴょん、ぴょん、なわとび', seq: rep(8, 230, k => { const up = k % 2 === 0;
+    return fig({ dy: up ? -3 : 0, l: 'up', r: 'up', lift: up ? [0, 1, 2, 3] : [], eyes: k > 4 ? 'happy' : 'open',
+      extra: up ? [[STICK, -2, 13, 28, 1], [STICK, -2, 1, 1, 12], [STICK, 25, 1, 1, 12]] : [[STICK, -2, -6, 28, 1], [STICK, -2, -5, 1, 9], [STICK, 25, -5, 1, 9]] }); }) },
+  { name: 'おいわい', desc: 'とんがりぼうしで、おめでとう！', seq: rep(10, 220, k => fig({ l: k % 2 ? 'hi' : 'up', r: k % 2 ? 'up' : 'hi', dy: k % 4 === 0 ? -1 : 0, eyes: 'happy', cheek: true, extra: [...party.map(([c, x, y, w, h]) => [c, x, y + (k % 4 === 0 ? -1 : 0), w, h]), ...confetti(k)] })) },
+  { name: 'まばたき', desc: 'パチパチ…パチッとウインク', seq: [[fig(), 700], [fig({ eyes: 'closed' }), 100], [fig(), 150], [fig({ eyes: 'closed' }), 100], [fig(), 500], [fig({ eyes: 'closed' }), 100], [fig(), 150],
+    [fig({ eyes: 'wink', cheek: true, extra: spark(22, -3) }), 700], [fig(), 400]] },
+];
+
+// ── 仮装のパターン（96〜120） ──
+const BROWN = '#8b5a2b', NAVY = '#2c3e70', NINJA = '#2b2f3a', PUMPKIN = '#f08a3c', PUMP_D = '#d46f25', GLASS = '#bfe3f5', BEIGE = '#e8c9a0', MANE = '#c9772e', BELT = '#3a3a6a';
+const poof = [[STEAM,-2,4,4,3],[STEAM,22,3,4,3],[STEAM,8,-4,5,3],[STEAM,3,12,4,3],[STEAM,17,12,4,3],[STEAM,10,14,4,2]];
+// へんしん：ぽんっと煙 → 仮装してポーズ（arms：'wave' 右手をふる / 'both' 両手 / 'none'）→ キラキラ
+function dress(name, desc, cos, o = {}) {
+  const arms = o.arms || 'wave';
+  const s = [[fig(), 400], [fig({ eyes: 'closed', extra: poof }), 250], [fig({ eyes: 'closed', extra: [...cos(0, 0), ...poof.slice(0, 3)] }), 200]];
+  for (let k = 0; k < 6; k++) {
+    const t = o.bob === false ? 0 : (k % 2 ? -1 : 0);
+    s.push([fig({ dy: t, eyes: o.eyes || (k % 3 === 2 ? 'closed' : 'happy'), mouth: o.mouth, dx: o.step ? (k % 2 ? 1 : -1) : 0, lift: o.stomp ? (k % 2 ? [0, 1] : [2, 3]) : [],
+      l: arms === 'both' ? (k % 2 ? 'hi' : 'up') : 'side', r: arms === 'none' ? 'side' : (k % 2 ? 'up' : 'hi'), nolegs: o.nolegs, extra: cos(t, k) }), o.ms || 280]);
+  }
+  s.push([fig({ eyes: 'happy', cheek: !o.nocheek, mouth: o.mouth, nolegs: o.nolegs, extra: [...cos(0, 0), ...spark(-4, -8), ...spark(26, -10)] }), 800]);
+  return { name, desc, seq: s };
+}
+const DRESSES = [
+  dress('まじょ', 'とんがりぼうしと、ほうき', (t, k) => [[PURPLE,2,t-1,20,1],[PURPLE,6,t-4,12,3],[PURPLE,9,t-7,7,3],[PURPLE,12,t-9,4,2],[PURPLE,15,t-10,3,1],[GOLD,6,t-2,12,1],[STICK,25,t+1,1,11],[BOX,24,t+12,3,3], ...(k % 2 ? spark(27, t - 4) : [])], { arms: 'none' }),
+  dress('かいぞく', 'バンダナとアイパッチで、ヨーホー', (t, k) => [[RED,4,t,16,2],[RED,20,t+1,3,1],[RED,21,t+2,2,1],[K,5,t+2,4,3],[K,9,t+2,11,1],[SPOON,25,t-3+(k%2),1,8],[GOLD,24,t+4+(k%2),3,1]]),
+  dress('にんじゃ', 'ずきんをかぶって、しゅりけん', (t, k) => [[NINJA,4,t,16,2],[NINJA,4,t+5,16,7],[NINJA,20,t+1,4,1],[NINJA,22,t+2,3,1], ...(k % 2 ? [[IRON,27,t-2,1,3],[IRON,26,t-1,3,1]] : [[IRON,26,t-2,1,1],[IRON,28,t-2,1,1],[IRON,27,t-1,1,1],[IRON,26,t,1,1],[IRON,28,t,1,1]])], { arms: 'wave', eyes: 'open', nocheek: true }),
+  dress('おうさま', 'かんむりと、赤いマント', (t) => [[RED,1,t+8,3,8],[RED,20,t+8,3,8],[GOLD,6,t-3,12,3],[GOLD,6,t-5,2,2],[GOLD,11,t-5,2,2],[GOLD,16,t-5,2,2],[RED,11,t-2,2,1],[SPRINK,7,t-2,1,1],[SPRINK,16,t-2,1,1]], { arms: 'none' }),
+  dress('おひめさま', 'ティアラと、ふんわりドレス', (t) => [[GOLD,8,t-2,8,1],[GOLD,11,t-3,2,1],[PINK,11,t-4,2,1],[PINK,2,t+9,20,5],[RICE,2,t+13,20,1],[RICE,8,t+9,8,1]], { arms: 'both' }),
+  dress('サンタさん', '赤いぼうしと、白いおひげ', (t) => [[RED,5,t-3,14,3],[RED,9,t-5,8,2],[RED,15,t-6,4,1],[RICE,19,t-7,2,2],[RICE,4,t-1,16,2],[RICE,6,t+6,12,4],[RICE,8,t+10,8,1]]),
+  dress('トナカイ', 'つのと、ピカッと光る赤いはな', (t, k) => [[BROWN,6,t-5,1,5],[BROWN,4,t-6,1,3],[BROWN,8,t-6,1,2],[BROWN,17,t-5,1,5],[BROWN,19,t-6,1,3],[BROWN,15,t-6,1,2],[k % 2 ? RED : '#ff7b7b',11,t+5,2,2], ...(k % 2 ? [[GOLD,10,t+4,1,1],[GOLD,13,t+7,1,1]] : [])], { arms: 'both' }),
+  dress('かぼちゃ', 'ハロウィンのかぼちゃおばけ', (t, k) => [[PUMPKIN,2,t-1,20,9],[PUMP_D,8,t-1,1,9],[PUMP_D,15,t-1,1,9],[LEAF,11,t-3,2,2],[k % 2 ? GOLD : K,6,t+2,3,2],[k % 2 ? GOLD : K,15,t+2,3,2],[K,8,t+5,8,1],[K,9,t+6,2,1],[K,13,t+6,2,1]], { arms: 'both' }),
+  dress('ドラキュラ', '黒いマントと、きらりとキバ', (t) => [[K,0,t+3,4,12],[K,20,t+3,4,12],[RED,1,t+4,2,10],[RED,21,t+4,2,10],[K,3,t-1,3,4],[K,18,t-1,3,4],[K,4,t,16,1],[K,11,t+1,2,1],[RICE,10,t+6,1,2],[RICE,13,t+6,1,2]], { arms: 'none', mouth: 'closed' }),
+  dress('ミイラ', 'ほうたいぐるぐる、のっしのっし', (t) => [[RICE,4,t+1,16,1],[RICE,4,t+4,3,1],[RICE,17,t+4,3,1],[RICE,4,t+7,16,1],[RICE,4,t+10,16,1],[STEAM,6,t+5,6,1],[STEAM,12,t+9,6,1],[RICE,0,t+5,4,1],[RICE,20,t+5,4,1]], { arms: 'both', step: true, stomp: true }),
+  dress('うちゅうひこうし', 'ヘルメットをかぶって、宇宙へ', (t, k) => [[RICE,2,t-3,20,1],[RICE,1,t-2,1,11],[RICE,22,t-2,1,11],[RICE,2,t+9,20,1],[GLASS,3,t-2,3,1],[GLASS,3,t-1,1,2],[IRON,11,t-6,1,3],[k % 2 ? RED : GOLD,11,t-7,1,1], ...spark(-5, t - 10 + (k % 3)), ...spark(27, t - 5 - (k % 3))], { arms: 'both' }),
+  dress('ロボット', 'ウィーン、ガシャン', (t, k) => [[IRON,4,t,16,6],[k % 2 ? GOLD : SPRINK,6,t+2,3,2],[k % 2 ? GOLD : SPRINK,15,t+2,3,2],[IRON,11,t-3,2,3],[RED,11,t-4,2,1],[RICE,4,t+3,1,1],[RICE,19,t+3,1,1],[K,9,t+5,6,1]], { arms: 'both', step: true, eyes: 'closed', nocheek: true, ms: 200 }),
+  dress('コックさん', 'コックぼうしで、フライパン', (t, k) => [[RICE,6,t-6,12,4],[RICE,5,t-7,4,2],[RICE,10,t-8,4,2],[RICE,15,t-7,4,2],[STEAM,6,t-2,12,1],[STICK,21,t+6,3,1],[IRON,24,t+5,6,2],[RICE,25,t+1-(k%2)*4,3,2],[GOLD,26,t+1-(k%2)*4,1,1]], { arms: 'none' }),
+  dress('おいしゃさん', 'ちょうしんきで、もしもし', (t) => [[RICE,4,t-1,16,1],[SPOON,10,t-3,4,3],[RICE,11,t-3,1,1],[RICE,2,t+7,2,5],[RICE,20,t+7,2,5],[IRON,7,t+6,1,4],[IRON,16,t+6,1,4],[IRON,7,t+10,10,1],[SPOON,11,t+10,2,2]], { arms: 'none' }),
+  dress('おまわりさん', 'ぼうしとバッジで、ピッ', (t, k) => [[NAVY,4,t-2,16,3],[K,3,t+1,18,1],[GOLD,11,t-1,2,2],[GOLD,10,t+9,2,2], ...(k % 2 ? [[RICE,23,t+2,2,1],[STEAM,26,t+1,2,1],[STEAM,26,t+3,2,1]] : [])]),
+  dress('しょうぼうし', 'ヘルメットと、ホースで放水', (t, k) => [[RED,4,t-3,16,4],[RED,2,t+1,20,1],[GOLD,11,t-2,2,2],[RED,20,t+8,6,1],[WATER,27,t+6-(k%2),3,1],[WATER,29,t+4+(k%2),2,1],[WATER,30,t+8,2,1]], { arms: 'none' }),
+  dress('ゆうびんやさん', '〒のぼうしと、ゆうびんかばん', (t, k) => [[NAVY,4,t-2,16,3],[K,3,t+1,18,1],[RED,10,t-2,4,1],[RED,10,t-1,4,1],[RED,11,t,2,1],[K,5,t+3,1,1],[K,6,t+4,14,1],[RED,20,t+8,6,5],[RICE,21,t+7,3,2],[PINK,22,t+7,1,1], ...(k % 2 ? [[RICE,-4,t+2-(k%4),4,3],[RED,-3,t+3-(k%4),1,1]] : [])]),
+  dress('きょうりゅう', 'トゲトゲとしっぽで、ガオー', (t, k) => [[GREEN,6,t-2,2,2],[GREEN,10,t-3,2,3],[GREEN,14,t-2,2,2],[GREEN,22,t+10,5,2],[GREEN,26,t+8,2,3], ...(k % 2 ? [[K,10,t+5,4,3],[RICE,10,t+5,1,1],[RICE,13,t+5,1,1]] : [])], { arms: 'both', stomp: true }),
+  dress('ライオン', 'たてがみで、ガオーッ', (t, k) => [[MANE,2,t-2,20,2],[MANE,1,t,3,9],[MANE,20,t,3,9],[MANE,3,t-3,4,1],[MANE,17,t-3,4,1],[K,11,t+5,2,1], ...(k % 2 ? [[K,10,t+6,4,2]] : [])], { arms: 'both' }),
+  dress('くま', 'まるいおみみの、くまさん', (t) => [[BROWN,4,t-2,4,3],[BROWN,16,t-2,4,3],[PINK,5,t-1,2,1],[PINK,17,t-1,2,1],[BEIGE,9,t+5,6,3],[K,11,t+5,2,1],[BEIGE,8,t+9,8,3]]),
+  dress('ペンギン', 'よちよち、ペンギンさん', (t, k) => [[K,4,t,16,2],[K,4,t,3,12],[K,17,t,3,12],[RICE,7,t+2,10,10],[K,8,t+3,2,2],[K,14,t+3,2,2],[GOLD,11,t+6,2,2],[K,0,t+4+(k%2?-2:0),4,4],[K,20,t+4+(k%2?0:-2),4,4]], { arms: 'none', step: true, eyes: 'open', nocheek: true }),
+  dress('てんし', 'わっかと、白いはね', (t, k) => [[GOLD,8,t-5,8,1],[GOLD,7,t-4,1,1],[GOLD,16,t-4,1,1],[GOLD,8,t-3,8,1],[RICE,-4,t+2-(k%2),4,6],[RICE,-6,t+3-(k%2),2,4],[RICE,24,t+2-(k%2),4,6],[RICE,28,t+3-(k%2),2,4]], { arms: 'both' }),
+  dress('あくま', 'ツノとしっぽで、いたずら', (t, k) => [[RED,5,t-3,2,3],[RED,4,t-4,1,2],[RED,17,t-3,2,3],[RED,19,t-4,1,2],[RED,21,t+11,4,1],[RED,25,t+9-(k%2),1,3],[RED,24,t+8-(k%2),3,1]], { arms: 'wave', eyes: 'angry' }),
+  dress('おすもうさん', 'ちょんまげとまわしで、どすこい', (t) => [[K,10,t-3,4,3],[K,9,t-1,6,1],[BELT,4,t+9,16,3],[BELT,10,t+12,4,2],[RICE,11,t+12,1,2]], { arms: 'both', stomp: true, bob: false }),
+  dress('カウボーイ', 'ハットとなげなわで、ヒーハー', (t, k) => [[BROWN,6,t-4,12,3],[BROWN,2,t-1,20,1],[K,6,t-2,12,1],[RED,8,t+7,8,2], ...(k % 2 ? [[STICK,24,t-6,6,1],[STICK,23,t-5,1,3],[STICK,30,t-5,1,3],[STICK,24,t-2,6,1]] : [[STICK,23,t-8,6,1],[STICK,22,t-7,1,3],[STICK,29,t-7,1,3],[STICK,23,t-4,6,1]])]),
+];
+
+// ── オリジナルキャラ：トランプのマジシャン（オレンジのキャラクターと同じ 横24×縦16マス） ──
+const MG_HAIR = '#b48ad8', MG_HAIR_D = '#8a62b5', MG_SKIN = '#f6e3d3', MG_SUIT = '#5b3f8c', MG_SUIT_D = '#43306a', MG_EYE = '#3fae7a';
+// o: { dy, eyes:'open'|'wink'|'closed'|'grin', l/r: 'side'|'up'|'hi', card: [x,y] 持っているカード, extra }
+function mage(o = {}) {
+  const dy = o.dy || 0, r = [];
+  const R = (c, x, y, w, h) => r.push([c, x, y + dy, w, h]);
+  // かみの毛（つんつん）
+  R(MG_HAIR, 6, 0, 12, 2); R(MG_HAIR, 5, -2, 2, 3); R(MG_HAIR, 9, -3, 2, 3); R(MG_HAIR, 13, -3, 2, 3); R(MG_HAIR, 17, -2, 2, 3); R(MG_HAIR_D, 6, 1, 12, 1);
+  // かお
+  R(MG_SKIN, 7, 2, 10, 5); R(MG_HAIR, 6, 2, 1, 3); R(MG_HAIR, 17, 2, 1, 3);
+  const e = o.eyes || 'open';
+  if (e === 'closed' || e === 'grin') { R(K, 9, 4, 2, 1); R(K, 13, 4, 2, 1); }
+  else { R(MG_EYE, 9, 4, 2, 1); R(K, 9, 3, 2, 1); if (e === 'wink') R(K, 13, 4, 2, 1); else { R(MG_EYE, 13, 4, 2, 1); R(K, 13, 3, 2, 1); } }
+  R(GOLD, 8, 5, 1, 1); R(SPRINK, 15, 5, 1, 1);                          // ほっぺのペイント（ダイヤとしずく風）
+  R(K, 11, 6, e === 'grin' ? 3 : 2, 1); if (e === 'grin') R(K, 14, 5, 1, 1);   // にやり
+  // からだ
+  R(MG_SUIT, 8, 7, 8, 6); R(RICE, 10, 7, 4, 1); R(GOLD, 8, 10, 8, 1); R(MG_SUIT_D, 11, 8, 2, 2);
+  const arm = (side, pose) => { const x = side ? 16 : 5, hx = side ? 19 : 4;
+    if (pose === 'hi') { R(MG_SUIT, x, 3, 3, 4); R(MG_SKIN, side ? 17 : 5, 2, 2, 1); }
+    else if (pose === 'up') { R(MG_SUIT, x, 6, 3, 2); R(MG_SKIN, hx, 5, 1, 2); }
+    else { R(MG_SUIT, x, 8, 3, 3); R(MG_SKIN, side ? 17 : 5, 11, 2, 1); } };
+  arm(0, o.l); arm(1, o.r);
+  // あし
+  R(MG_SUIT_D, 9, 13, 2, 2); R(MG_SUIT_D, 13, 13, 2, 2); R(K, 8, 15, 3, 1); R(K, 13, 15, 3, 1);
+  const card = (x, y, red) => { r.push([RICE, x, y, 3, 4]); r.push([red ? RED : K, x + 1, y + 1, 1, 2]); };
+  if (o.card) card(o.card[0], o.card[1] + dy, o.card[2]);
+  (o.extra || []).forEach(q => r.push(q));
+  return r;
+}
+const flyCard = (x, y) => [[RICE, x, y, 4, 1], [RED, x + 1, y, 1, 1]];   // 横向きで飛ぶカード
+const ORIG = [
+  { name: 'マジシャン：カードなげ', desc: 'カードを取りだして、シュッ！', seq: [
+    [mage(), 600], [mage({ r: 'up', card: [19, 3, true] }), 400], [mage({ r: 'up', eyes: 'grin', card: [19, 3, true] }), 500],
+    [mage({ r: 'hi', eyes: 'grin', card: [18, -2, true] }), 200], [mage({ r: 'up', eyes: 'grin', extra: flyCard(22, 2) }), 90], [mage({ r: 'up', extra: flyCard(27, 2) }), 90],
+    [mage({ eyes: 'wink', extra: [...flyCard(32, 2), ...spark(30, -4)] }), 200], [mage({ eyes: 'wink' }), 700] ] },
+  { name: 'マジシャン：シャッフル', desc: 'トランプを両手でシャッフル', seq: (() => { const s = [[mage(), 500]];
+    for (let k = 0; k < 8; k++) s.push([mage({ l: 'up', r: 'up', eyes: k % 4 === 3 ? 'grin' : 'closed',
+      extra: [[RICE, 9, 6 - (k % 2), 3, 4], [RICE, 12, 5 + (k % 2), 3, 4], [RED, 10, 7 - (k % 2), 1, 1], [K, 13, 6 + (k % 2), 1, 1], ...(k % 2 ? [[RICE, 11, 3, 2, 1]] : [])] }), 160]);
+    s.push([mage({ r: 'hi', eyes: 'wink', card: [18, -2, false] }), 800]); return s; })() },
+  { name: 'マジシャン：ゆびの上のカード', desc: 'ゆびの上でカードをくるくる', seq: (() => { const s = [];
+    for (let k = 0; k < 8; k++) s.push([mage({ r: 'hi', eyes: k % 4 === 0 ? 'grin' : 'open', dy: k % 2 ? 0 : 0,
+      extra: k % 2 ? [[RICE, 17, -5, 3, 4], [RED, 18, -4, 1, 2]] : [[RICE, 16, -3, 5, 1], [RED, 18, -3, 1, 1]] }), 200]);
+    s.push([mage({ r: 'hi', eyes: 'wink', extra: [[RICE, 17, -5, 3, 4], [RED, 18, -4, 1, 2], ...spark(22, -9)] }), 700]); return s; })() },
+];
+
+// ── なかまのキャラクター（124〜135） ──
+const sc = (rects, k, ox, oy) => rects.map(([c, x, y, w, h]) => [c, ox + x * k, oy + y * k, w * k, h * k]);   // 小さくして置く
+const rc = (rects, col) => rects.map(r => r[0] === O ? [col, ...r.slice(1)] : r);                                 // 色ちがい
+const POST = '#d8352f', POST_D = '#a8261f', TAPE = '#e9d8a6', CAT = '#9a9aa6', CAT_D = '#76768a', CHICK = '#f5d33d', BEAK = '#f08a3c';
+const letterR = (x, y) => [[RICE, x, y, 4, 3], [STEAM, x, y, 4, 1], [RED, x + 3, y + 1, 1, 1]];
+const postbox = (o = {}) => { const t = o.sq ? 1 : 0, r = [[POST, 6, t, 12, 14 - t], [POST, 7, t - 1, 10, 1], [POST_D, 6, 12, 12, 2], [K, 9, t + 5, 6, 1],
+  [RICE, 10, 8, 4, 1], [RICE, 10, 9, 4, 1], [RICE, 11, 10, 2, 2], [K, 8, 14, 2, 2], [K, 14, 14, 2, 2]];
+  if (o.eyes === 'happy') r.push([K, 8, t + 2, 3, 1], [K, 13, t + 2, 3, 1]); else if (o.eyes === 'closed') r.push([K, 8, t + 3, 3, 1], [K, 13, t + 3, 3, 1]); else r.push([K, 9, t + 1, 2, 2], [K, 13, t + 1, 2, 2]);
+  return r.concat(o.extra || []); };
+const parcel = (o = {}) => { const dy = o.dy || 0, l = o.lift || 0, r = [[BOX, 4, 2 + dy, 16, 11], [BOX_D, 4, 2 + dy, 16, 1], [TAPE, 11, 2 + dy, 2, 11], [RICE, 5, 9 + dy, 4, 2], [RED, 6, 9 + dy, 1, 1],
+  [BOX_D, 2, 7 + dy, 2, 2], [BOX_D, 20, 7 + dy, 2, 2], [BOX_D, 7, 13 + dy, 2, l === 1 ? 1 : 3], [BOX_D, 15, 13 + dy, 2, l === 2 ? 1 : 3]];
+  if (o.eyes === 'happy') r.push([K, 7, 6 + dy, 3, 1], [K, 14, 6 + dy, 3, 1]); else r.push([K, 8, 5 + dy, 2, 2], [K, 14, 5 + dy, 2, 2]);
+  if (o.mouth) r.push([K, 11, 8 + dy, 2, 1]); return r.concat(o.extra || []); };
+const bike = (k, dx) => { const s = k % 2, r = [[K,0,11,6,5],[K,18,11,6,5],[IRON,2,13,2,1],[IRON,20,13,2,1],[IRON,s?3:2,s?12:13,1,s?3:1],[IRON,s?21:20,s?12:13,1,s?3:1],
+  [POST,5,9,13,3],[POST,3,8,4,2],[K,8,7,7,2],[IRON,17,4,1,6],[IRON,16,4,3,1],[POST,0,3,6,5],[RICE,2,4,2,1],[RICE,2,5,2,1],[RICE,2,6,1,1],[GOLD,22,8,2,1]];
+  return r.map(([c, x, y, w, h]) => [c, x + dx, y, w, h]); };
+const cat = (o = {}) => { const w = o.wag || 0, r = [[CAT,5,0,14,8],[CAT,5,-2,3,2],[CAT,16,-2,3,2],[PINK,6,-1,1,1],[PINK,17,-1,1,1],[CAT,7,8,10,6],[CAT,8,14,2,2],[CAT,14,14,2,2],
+  [CAT,17,8,2,5],[CAT,18 + w,5,2,3],[CAT_D,9,8,1,6],[CAT_D,12,8,1,6],[PINK,11,5,2,1],[K,10,6,1,1],[K,13,6,1,1]];
+  if (o.eyes === 'closed') r.push([K,7,3,3,1],[K,14,3,3,1]); else r.push([K,8,2,2,2],[K,14,2,2,2]);
+  return r.concat(o.extra || []); };
+const chick = (o = {}) => { const dy = o.dy || 0, f = o.flap ? -2 : 0, r = [[CHICK,6,3+dy,12,10],[CHICK,8,0+dy,8,4],[CHICK,4,6+dy+f,2,4],[CHICK,18,6+dy+f,2,4],[BEAK,11,o.peck?6+dy:4+dy,2,2],[BEAK,8,13,2,3],[BEAK,14,13,2,3]];
+  r.push(o.eyes === 'happy' ? [K,8,2+dy,3,1] : [K,9,2+dy,2,2]); r.push(o.eyes === 'happy' ? [K,13,2+dy,3,1] : [K,13,2+dy,2,2]); return r.concat(o.extra || []); };
+const penguin = (o = {}) => { const dx = o.dx || 0, f = o.flap ? -2 : 0, r = [[K,6,0,12,14],[RICE,8,4,8,9],[RICE,8,2,3,2],[RICE,13,2,3,2],[K,9,2,2,2],[K,13,2,2,2],[GOLD,11,5,2,2],
+  [K,3,5+f,3,6],[K,18,5+f,3,6],[GOLD,7,14,3,2],[GOLD,14,14,3,2]];
+  return r.map(([c, x, y, w, h]) => [c, x + dx, y, w, h]).concat(o.extra || []); };
+const onigiriKun = (o = {}) => { const dy = o.dy || 0, r = [[RICE,10,0+dy,4,2],[RICE,8,2+dy,8,2],[RICE,6,4+dy,12,2],[RICE,4,6+dy,16,7],[NORI,7,9+dy,10,4],[PINK,6,8+dy,2,1],[PINK,16,8+dy,2,1],
+  [RICE,1,o.arms?5+dy:8+dy,3,2],[RICE,20,o.arms?5+dy:8+dy,3,2],[K,8,13,2,3],[K,14,13,2,3]];
+  r.push(...(o.eyes === 'happy' ? [[K,7,6+dy,3,1],[K,14,6+dy,3,1]] : [[K,8,5+dy,2,2],[K,14,5+dy,2,2]])); return r.concat(o.extra || []); };
+const eggKun = (o = {}) => { const t = o.tilt || 0, r = [[RICE,7+t,0,10,2],[RICE,5+t,2,14,10],[RICE,7,12,10,2],[STEAM,15+t,3,2,6],[K,8,14,2,2],[K,14,14,2,2]];
+  r.push(...(o.eyes === 'closed' ? [[K,8+t,6,3,1],[K,13+t,6,3,1]] : [[K,9+t,5,2,2],[K,13+t,5,2,2]]));
+  if (o.crack) r.push([K,6+t,4,2,1],[K,8+t,3,2,1],[K,10+t,4,2,1],[K,12+t,3,2,1],[K,14+t,4,2,1],[K,16+t,3,2,1]);
+  if (o.peek) r.push([CHICK,9,-3,6,4],[K,10,-2,1,1],[K,13,-2,1,1],[BEAK,11,-1,2,1]);
+  return r.concat(o.extra || []); };
+const FRIENDS = [
+  { name: '色ちがいの兄弟', desc: '青・オレンジ・みどりが、じゅんばんにぴょん', seq: rep(9, 220, k => { const j = k % 3;
+    return [...sc(rc(fig({ dy: j === 0 ? -3 : 0, eyes: j === 0 ? 'happy' : 'open' }), '#5a8fd0'), .55, -6, 3), ...sc(fig({ dy: j === 1 ? -3 : 0, eyes: j === 1 ? 'happy' : 'open' }), .55, 6, 3),
+      ...sc(rc(fig({ dy: j === 2 ? -3 : 0, eyes: j === 2 ? 'happy' : 'open' }), '#5aa35a'), .55, 18, 3)]; }) },
+  { name: '親子', desc: '小さい子が、あとをてくてくついていく', seq: rep(10, 230, k => [...fig({ dx: -6, lift: k % 2 ? [0, 2] : [1, 3], eyes: k % 4 === 3 ? 'happy' : 'open' }),
+    ...sc(fig({ lift: k % 2 ? [1, 3] : [0, 2], dy: k % 2 ? -2 : 0, eyes: 'happy' }), .45, 20, 8)]) },
+  { name: 'ゆうびんポスト', desc: 'てがみをパクッ！ごちそうさま', seq: [[postbox(), 500], ...[28, 23, 18].map(x => [postbox({ extra: letterR(x, 4) }), 160]), [postbox({ extra: letterR(12, 4) }), 120],
+    [postbox({ sq: 1, eyes: 'closed' }), 250], [postbox({ eyes: 'closed' }), 200], [postbox({ sq: 1, eyes: 'closed' }), 250], [postbox({ eyes: 'happy', extra: heart(18, -6) }), 800]] },
+  { name: '小包', desc: 'ダンボールが、てくてくおさんぽ', seq: rep(10, 220, k => parcel({ dy: k % 2 ? 0 : -1, lift: k % 2 ? 1 : 2, eyes: k > 6 ? 'happy' : 'open', mouth: k > 6, extra: k > 6 ? spark(22, -3) : [] })) },
+  { name: '配達バイク', desc: 'ブーン！とやってきて、ピタッ', seq: [...rep(6, 140, k => [...bike(k, -30 + k * 5), [STEAM, -36 + k * 5, 12, 3, 1]]), ...rep(4, 180, k => [...bike(k, 0), ...(k % 2 ? [[STEAM, -4, 12, 3, 1], [STEAM, -7, 11, 2, 1]] : [])]),
+    [[...bike(0, 0), ...spark(26, -2)], 600]] },
+  { name: 'ねこ', desc: 'しっぽをふりふり、にゃーん', seq: rep(10, 230, k => cat({ wag: [0, 1, 2, 1, 0, -1, -2, -1, 0, 0][k], eyes: k === 4 || k === 8 ? 'closed' : 'open', extra: k > 5 ? note(22, -6 - (k % 2)) : [] })) },
+  { name: 'ひよこ', desc: 'ぴよぴよ、つんつん', seq: rep(10, 200, k => chick({ dy: k % 4 === 0 ? -2 : 0, flap: k % 2, peck: k === 6 || k === 7, eyes: k > 7 ? 'happy' : 'open', extra: k === 7 ? [[GOLD, 12, 13, 1, 1]] : [] })) },
+  { name: 'ペンギン', desc: 'よちよち歩いて、パタパタ', seq: rep(10, 220, k => penguin({ dx: [-2, -1, 0, 1, 2, 2, 1, 0, -1, -2][k], flap: k > 6 && k % 2 })) },
+  { name: 'おにぎりくん', desc: 'ばんざいして、ぴょんぴょん', seq: rep(8, 230, k => onigiriKun({ dy: k % 2 ? 0 : -2, arms: k % 2 === 0, eyes: k % 4 === 0 ? 'happy' : 'open', extra: k % 4 === 0 ? spark(22, -4) : [] })) },
+  { name: 'たまごくん', desc: 'ゆらゆら…パリッ！ひよこがこんにちは', seq: [...rep(6, 200, k => eggKun({ tilt: [0, 1, 0, -1, 0, 1][k], eyes: k === 3 ? 'closed' : 'open' })), [eggKun({ crack: true }), 400],
+    [eggKun({ crack: true, peek: true }), 900], [eggKun({ crack: true, peek: true, extra: heart(18, -7) }), 700], [eggKun({}), 300]] },
+  { name: 'マジシャン：まほうの花', desc: 'カードが、ぽんっと花にかわる', seq: [[mage({ r: 'up', card: [19, 3, true] }), 500], [mage({ r: 'up', eyes: 'grin', card: [19, 3, true] }), 400],
+    [mage({ r: 'up', eyes: 'closed', extra: [[STEAM, 18, 1, 5, 3], [STEAM, 17, 3, 2, 2], [STEAM, 22, 4, 2, 2]] }), 250],
+    [mage({ r: 'up', eyes: 'wink', extra: [[LEAF, 20, 2, 1, 5], [PINK, 18, -1, 5, 3], [GOLD, 20, 0, 1, 1], ...spark(24, -5)] }), 900]] },
+  { name: 'オレンジとマジシャン', desc: 'カードをなげて、オレンジがキャッチ', seq: (() => { const mg = o => sc(mage(o), .6, 13, 4), cc = o => sc(fig(o), .55, -3, 7);
+    return [[[...cc({}), ...mg({ card: [19, 3, true], r: 'up' })], 500], [[...cc({}), ...mg({ r: 'hi', eyes: 'grin', card: [18, -2, true] })], 250],
+      ...[22, 16, 10].map(x => [[...cc({ eyes: 'big' }), ...mg({ r: 'up' }), [RICE, x, 4, 2, 1]], 120]),
+      [[...cc({ l: 'hi', r: 'hi', eyes: 'happy', extra: [[RICE, 1, -6, 3, 4], [RED, 2, -5, 1, 2]] }), ...mg({ eyes: 'wink' })], 500],
+      [[...cc({ l: 'hi', r: 'hi', eyes: 'happy', cheek: true, extra: [[RICE, 1, -6, 3, 4], [RED, 2, -5, 1, 2]] }), ...mg({ eyes: 'grin' }), ...heart(10, -8)], 800]]; })() },
+];
+
+// ── ブロックの世界ふう（136〜155）：オレンジのキャラクターが、四角いブロックや道具に変身 ──
+const GRASS = '#5fae4a', GRASS_D = '#4a8f3a', DIRT = '#8b5e3c', DIRT_D = '#6e4a2e', STONE = '#8d8d8d', STONE_D = '#6f6f6f', LOGB = '#7a5532', LOGR = '#c9a06a',
+      SAND = '#e3d29a', SAND_D = '#cdb97e', BRICK = '#b5523b', MORTAR = '#d9cbb8', GEM = '#4fd1d9', WOOL = '#eeeeee', PIGC = '#f2a7b5', PIG_D = '#d9808f';
+const eyes2 = t => [[K, 6, t + 2, 2, 2], [K, 16, t + 2, 2, 2]];
+const body = (t, base, dots = []) => [[base, 4, t, 16, 12], ...dots.map(([c, x, y, w = 2, h = 2]) => [c, x, t + y, w, h]), ...eyes2(t)];
+const pick = (x, y) => [[STICK, x, y, 1, 7], [STONE, x - 3, y, 7, 1], [STONE, x - 3, y + 1, 1, 1], [STONE, x + 3, y + 1, 1, 1]];
+const sword = (x, y) => [[GEM, x, y, 1, 6], [RICE, x, y, 1, 1], [STICK, x - 1, y + 6, 3, 1], [STICK, x, y + 7, 1, 2]];
+const BLOCKS = [
+  dress('草ブロック', 'みどりの草に、茶色の土', t => body(t, DIRT, [[GRASS,4,0,16,3],[GRASS,5,3,2,1],[GRASS,10,3,1,2],[GRASS,15,3,2,1],[DIRT_D,7,7],[DIRT_D,13,9],[DIRT_D,17,6]]), { arms: 'both' }),
+  dress('土ブロック', 'ほっこり茶色の土', t => body(t, DIRT, [[DIRT_D,6,6],[DIRT_D,12,4],[DIRT_D,16,8],[DIRT_D,9,10],[DIRT_D,14,1]])),
+  dress('石ブロック', 'かたい石で、どっしり', t => body(t, STONE, [[STONE_D,6,6,3,1],[STONE_D,12,1,3,1],[STONE_D,15,8,3,1],[STONE_D,8,10,2,1],[RICE,10,5,1,1]]), { stomp: true, bob: false }),
+  dress('木の丸太', '年輪のある、木の丸太', t => [...body(t, LOGB, [[LOGR,4,0,16,2],[LOGB,6,1,12,1],[DIRT_D,7,4,1,7],[DIRT_D,12,5,1,6],[DIRT_D,17,3,1,8]])], { arms: 'both' }),
+  dress('葉っぱブロック', 'わさわさの葉っぱ', (t, k) => body(t, GRASS_D, [[GRASS,5,1],[GRASS,10,3],[GRASS,15,1],[GRASS,7,7],[GRASS,13,8],[GRASS,17,5], ...(k % 2 ? [[LEAF,-2,6+k%3,2,1],[LEAF,25,3,2,1]] : [])])),
+  dress('砂ブロック', 'さらさらの砂', (t, k) => body(t, SAND, [[SAND_D,6,4,1,1],[SAND_D,11,7,1,1],[SAND_D,16,3,1,1],[SAND_D,8,10,1,1],[SAND_D,14,10,1,1], ...(k % 2 ? [[SAND,6,13,1,1],[SAND,16,14,1,1]] : [])])),
+  dress('レンガ', 'がっしりレンガの家', t => body(t, BRICK, [[MORTAR,4,3,16,1],[MORTAR,4,7,16,1],[MORTAR,4,11,16,1],[MORTAR,10,0,1,3],[MORTAR,7,4,1,3],[MORTAR,15,4,1,3],[MORTAR,11,8,1,3]]), { stomp: true }),
+  dress('ガラス', 'すきとおったガラス', t => [[GLASS,4,t,16,1],[GLASS,4,t+11,16,1],[GLASS,4,t,1,12],[GLASS,19,t,1,12],[RICE,7,t+3,1,3],[RICE,8,t+2,1,1],[RICE,15,t+7,2,1], ...eyes2(t)], { arms: 'both' }),
+  dress('宝石の鉱石', '石の中に、水色の宝石', (t, k) => body(t, STONE, [[GEM,6,5],[GEM,13,2],[GEM,15,8],[GEM,9,9], ...(k % 2 ? [[RICE,13,2,1,1],[RICE,6,5,1,1]] : [])]).concat(k % 2 ? spark(24, -4) : [])),
+  dress('金の鉱石', '石の中に、ピカピカの金', (t, k) => body(t, STONE, [[GOLD,7,5],[GOLD,14,3],[GOLD,11,9],[GOLD,16,8]]).concat(k % 2 ? spark(-3, -3) : [])),
+  { name: 'つるはしでほる', desc: 'カンカン！ブロックをほって、宝石ゲット', seq: (() => { const s = [];
+    for (let k = 0; k < 6; k++) s.push([fig({ r: k % 2 ? 'up' : 'hi', eyes: 'angry', extra: [...(k % 2 ? pick(25, 2) : pick(22, -6)), [STONE, 25, 9, 6, 6], ...(k > 1 ? [[STONE_D, 27, 10, 1, 3], [STONE_D, 28, 12, 2, 1]] : []), ...(k > 3 ? [[K, 26, 11, 3, 1], [K, 29, 13, 1, 2]] : [])] }), 200]);
+    s.push([fig({ eyes: 'happy', l: 'hi', r: 'hi', extra: [[GEM, 10, -8, 3, 3], [RICE, 10, -8, 1, 1], ...spark(6, -10), ...spark(15, -11)] }), 900]); return s; })() },
+  { name: '剣をかまえる', desc: '水色の剣で、えいっ！', seq: [[fig(), 400], [fig({ r: 'up', extra: sword(22, 0) }), 300], [fig({ r: 'hi', eyes: 'angry', extra: sword(21, -9) }), 300],
+    [fig({ r: 'up', eyes: 'angry', dx: 1, extra: [...sword(25, 2), [RICE, 27, 0, 1, 6], [RICE, 28, 2, 1, 4]] }), 200], [fig({ r: 'up', eyes: 'happy', extra: [...sword(22, 0), ...spark(26, -6)] }), 800]] },
+  dress('かまど', '石のかまどで、ぽかぽか', (t, k) => body(t, STONE, [[K,8,6,8,5],[k % 2 ? RED : '#f39c34',9,8,6,3],[GOLD,11,9,2,2],[STONE_D,4,4,16,1]]).concat([[STEAM, 10, t - 3 - (k % 3), 2, 1], [STEAM, 13, t - 5 + (k % 2), 2, 1]]), { arms: 'none' }),
+  dress('作業台', '木の作業台で、ものづくり', (t, k) => body(t, LOGR, [[LOGB,4,0,16,1],[LOGB,9,0,1,3],[LOGB,14,0,1,3],[LOGB,4,3,16,1],[IRON,6,6,3,3],[LOGB,14,6,3,4], ...(k % 2 ? [[STEAM,20,t-1,2,1]] : [])]), { arms: 'both' }),
+  { name: 'たからばこ', desc: 'ふたがパカッ！中から宝石', seq: (() => { const box = (lid) => [[LOGB, 4, 4, 16, 10], [DIRT_D, 4, 8, 16, 1], [LOGB, 4, 2 - lid, 16, 3], [DIRT_D, 4, 4 - lid, 16, 1], [GOLD, 11, 6 - (lid ? 0 : 0), 2, 3], [K, 6, 1 - lid, 2, 2], [K, 16, 1 - lid, 2, 2]];
+    return [[fig(), 300], [fig({ eyes: 'closed', extra: poof }), 250], [box(0), 500], [box(0).map(([c, x, y, w, h]) => [c, x + 1, y, w, h]), 120], [box(0), 120], [box(4), 300],
+      [[...box(4), [GEM, 8, -4, 3, 3], [GOLD, 13, -6, 3, 3], ...spark(4, -9), ...spark(18, -10)], 900]]; })() },
+  dress('ベッド', 'まくらつきのベッドで、ねむねむ', (t, k) => [[RED, -2, t + 6, 28, 6], [RICE, -2, t + 4, 7, 4], [LOGB, -3, t + 4, 1, 10], [LOGB, 26, t + 7, 1, 7], [K, 0, t + 5, 2, 1], ...zee(22, -2 - (k % 3) * 2, ZZ())], { arms: 'none', eyes: 'closed', nolegs: true, nocheek: true }),
+  dress('ケーキ', 'しかくいケーキに、いちご', t => body(t, SPONGE, [[RICE,4,0,16,3],[RICE,6,3,2,1],[RICE,12,3,1,2],[RICE,17,3,2,1],[BERRY,6,-2+0,2,2],[BERRY,11,-2,2,2],[BERRY,16,-2,2,2],['#d9b77a',4,8,16,1]]), { arms: 'both' }),
+  dress('ブロックのブタ', 'ピンクのしかくいブタ', (t, k) => body(t, PIGC, [[PIG_D,9,5,6,4],[K,10,6,1,2],[K,13,6,1,2],[PIG_D,4,0,3,2],[PIG_D,17,0,3,2]]).concat(k % 2 ? note(23, -6) : []), { stomp: true }),
+  dress('ブロックのヒツジ', 'もこもこの白い毛', (t, k) => [...body(t, WOOL, [[STEAM,6,6],[STEAM,13,9],[STEAM,16,3],[RICE,9,3,1,1]]), [STONE_D, 8, t + 1, 8, 6], [K, 9, t + 3, 2, 1], [K, 13, t + 3, 2, 1], [PIGC, 11, t + 5, 2, 1]], { arms: 'none', step: true }),
+  dress('ブロックのニワトリ', 'しろいからだに、赤いトサカ', (t, k) => [...body(t, WOOL, [[RED,9,-2,6,2],[GOLD,10,4,4,2],[RED,11,6,2,2]]), ...(k % 2 ? [[WOOL, -1, t + 4, 5, 3], [WOOL, 20, t + 4, 5, 3]] : [[WOOL, 0, t + 6, 4, 3], [WOOL, 20, t + 6, 4, 3]])], { arms: 'none' }),
+];
+
+// ── ブロックの世界のなかまたち（156〜175）：四角いからだのオリジナルの生き物 ──
+const ZSKIN = '#5f9e5a', ZSHIRT = '#3e7fb5', ZPANTS = '#3d3a8c', BONE = '#d9d9d2', BONE_D = '#a9a9a2', SPIDER = '#3a3333', SLIME = '#7cd35f', SLIME_L = '#a8e88f',
+      GOLEM = '#9a9a90', MOSS = '#6a9a4a', BEE = '#f2c14e', WOLF = '#d9d4cc', HORSE = '#9a6a3c', SQUID = '#2f4a7a', SHELL = '#4f8a3a', FOX = '#e07a35', BAT = '#4a3a32',
+      DRAGON = '#6b4aa8', FISH = '#e0a04a', PARROT = '#d8433f', ROBE = '#4a6fb5';
+const mob = (n, ms, f) => rep(n, ms, f);
+const MOBS = [
+  { name: 'ゾンビ', desc: '両手をのばして、のっしのっし', seq: mob(8, 260, k => [[ZSKIN,7,0,10,7],[K,9,3,2,1],[K,13,3,2,1],[K,10,5,4,1],[ZSHIRT,7,7,10,5],[ZSKIN,17,7 - (k%2),7,3],[ZSKIN,0,8 - ((k+1)%2),7,3],
+    [ZPANTS,8,12,3,k % 2 ? 3 : 4],[ZPANTS,13,12,3,k % 2 ? 4 : 3]].map(([c,x,y,w,h]) => [c, x + (k % 4 < 2 ? 0 : 1), y, w, h])) },
+  { name: 'ガイコツ', desc: 'カタカタ、ゆみをかまえる', seq: mob(8, 240, k => [[BONE,8,0,8,7],[K,9,2,2,2],[K,13,2,2,2],[K,10,5,4,1],[BONE,11,7,2,6],[BONE,8,8,8,1],[BONE,8,10,8,1],[BONE,5,8,3,1],[BONE,16,8,3 + (k % 2),1],
+    [BONE,9,13,1,3],[BONE,14,13,1,3],[STICK,20,4,1,9],[STICK,21,3,1,1],[STICK,21,13,1,1],[STEAM,20 - (k % 2) * 2,8,1,1]]) },
+  { name: 'クモ', desc: '8本の足で、カサカサ', seq: mob(8, 160, k => { const u = k % 2; return [[SPIDER,6,5,12,7],[SPIDER,8,3,8,3],[RED,9,6,2,1],[RED,13,6,2,1],[RED,10,8,1,1],[RED,13,8,1,1],
+    ...[0,1,2,3].flatMap(i => [[SPIDER,1,6 + i*2 + (u ? (i%2) : -(i%2)),5,1],[SPIDER,18,6 + i*2 + (u ? -(i%2) : (i%2)),5,1]])].map(([c,x,y,w,h]) => [c, x + (k % 4 - 1.5), y, w, h]); }) },
+  { name: 'スライム', desc: 'ぷるぷる、ぽよーんとはねる', seq: mob(8, 200, k => { const h = [10, 9, 6, 11, 12, 11, 10, 10][k], w = [16, 17, 20, 14, 13, 14, 16, 16][k], y = 16 - h - [0, 0, 0, 3, 6, 3, 0, 0][k];
+    return [[SLIME, 12 - w / 2, y, w, h], [SLIME_L, 12 - w / 2 + 2, y + 2, w - 4, h - 4], [K, 12 - w / 2 + 3, y + 2, 2, 2], [K, 12 + w / 2 - 5, y + 2, 2, 2], [K, 11, y + h - 4, 2, 1]]; }) },
+  { name: '石のゴーレム', desc: 'こけの生えた、やさしい大男', seq: mob(8, 280, k => [[GOLEM,7,-2,10,7],[K,9,1,2,1],[K,13,1,2,1],[STONE_D,11,2,2,3],[GOLEM,4,5,16,7],[MOSS,6,6,3,2],[MOSS,15,9,2,2],
+    [GOLEM,1,6,3,k % 2 ? 9 : 8],[GOLEM,20,6,3,k % 2 ? 8 : 9],[GOLEM,7,12,4,4],[GOLEM,13,12,4,4], ...(k > 5 ? [[PINK,1,2,3,2],[LEAF,2,4,1,2]] : [])]) },
+  { name: 'ミツバチ', desc: 'ブーン、花のまわりをとぶ', seq: mob(8, 160, k => { const y = [0, -2, -3, -2, 0, 1, 0, -1][k];
+    return [[BEE,5,4 + y,14,8],[K,9,4 + y,2,8],[K,14,4 + y,2,8],[K,6,6 + y,2,2],[RICE,7 + (k % 2),k % 2 ? -1 + y : 1 + y,6,3],[STEAM,7 + (k % 2),k % 2 ? -1 + y : 1 + y,2,1],[K,19,8 + y,2,1],[PINK,22,12,3,2],[LEAF,23,14,1,2]]; }) },
+  { name: 'オオカミ', desc: 'しっぽをふって、ワン！', seq: mob(8, 220, k => [[WOLF,12,2,9,6],[WOLF,12,0,2,2],[WOLF,18,0,2,2],[K,14,4,1,1],[K,18,4,1,1],[K,20,5,2,1],[WOLF,3,6,14,6],[RED,12,8,6,1],
+    [WOLF,4,12,2,4],[WOLF,8,12,2,k % 2 ? 3 : 4],[WOLF,12,12,2,4],[WOLF,15,12,2,k % 2 ? 4 : 3],[WOLF,0,k % 2 ? 4 : 6,4,2], ...(k > 4 ? bang(22, -6) : [])]) },
+  { name: 'ウシ', desc: 'もぐもぐ、モ〜', seq: mob(8, 260, k => [[RICE,3,4,15,8],[K,5,5,4,3],[K,12,8,4,3],[K,13,4,2,2],[RICE,16,2,7,7],[K,18,4,1,1],[K,21,4,1,1],[PINK,17,7 + (k % 2),6,2],[STEAM,16,1,1,2],[STEAM,22,1,1,2],
+    [RICE,4,12,2,4],[RICE,8,12,2,4],[RICE,11,12,2,4],[RICE,15,12,2,4], ...(k > 5 ? note(25, -6) : [])]) },
+  { name: 'ウマ', desc: 'パカパカ、かけていく', seq: mob(8, 160, k => { const u = k % 2; return [[HORSE,3,4,14,7],[HORSE,15,0,4,8],[HORSE,17,-1,6,4],[K,20,0,1,1],[K,14,-1,2,6],[K,1,4,2,6 - u],
+    [HORSE,4,11,2,u ? 3 : 5],[HORSE,7,11,2,u ? 5 : 3],[HORSE,12,11,2,u ? 3 : 5],[HORSE,15,11,2,u ? 5 : 3],[K,4,u ? 14 : 16,2,1],[K,15,u ? 16 : 14,2,1]].map(([c,x,y,w,h]) => [c, x, y - (u ? 1 : 0), w, h]); }) },
+  { name: 'イカ', desc: 'すいすい、うみの中をおよぐ', seq: mob(8, 220, k => { const y = [0, -2, -4, -5, -4, -2, 0, 1][k], sp = k % 4 < 2;
+    return [[SQUID,7,y,10,9],[K,8,3 + y,2,2],[K,14,3 + y,2,2],...[0,1,2,3].map(i => [SQUID, 7 + i * 3 + (sp ? (i - 1.5) : 0), 9 + y, 1, sp ? 6 : 4]), [WATER,2,6 - y,1,1],[WATER,21,2 - y,1,1]]; }) },
+  { name: 'カメ', desc: 'のんびり、のそのそ', seq: mob(8, 320, k => [[SHELL,5,4,14,7],[GRASS,7,5,4,2],[GRASS,13,5,4,2],[GRASS,10,8,4,2],[LEAF,19,6 + (k % 2),4,4],[K,21,7 + (k % 2),1,1],
+    [LEAF,5,11,3,k % 2 ? 2 : 3],[LEAF,16,11,3,k % 2 ? 3 : 2],[SAND,0,14,24,2]].map(([c,x,y,w,h]) => [c, x + Math.floor(k / 2) * 0.5 - 1, y, w, h])) },
+  { name: 'キツネ', desc: 'ふさふさしっぽで、ぴょん', seq: mob(8, 200, k => { const dy = k % 4 === 1 ? -3 : 0;
+    return [[FOX,13,1,8,6],[FOX,13,-1,2,2],[FOX,19,-1,2,2],[RICE,16,5,5,2],[K,15,3,1,1],[K,19,3,1,1],[K,20,5,1,1],[FOX,4,6,12,6],[RICE,7,10,6,2],[FOX,0,4,5,4],[RICE,0,4,2,2],
+      [K,5,12,2,4],[K,13,12,2,4]].map(([c,x,y,w,h]) => [c, x, y + dy, w, h]); }) },
+  { name: 'パンダ', desc: 'ささをもぐもぐ、ごろん', seq: mob(8, 280, k => [[RICE,6,0,12,8],[K,6,-1,3,2],[K,15,-1,3,2],[K,8,3,3,2],[K,13,3,3,2],[RICE,9,3,1,1],[RICE,14,3,1,1],[K,11,6,2,1],
+    [RICE,5,8,14,6],[K,5,8,14,2],[K,3,9,3,4],[K,18,9,3,4],[K,6,14,4,2],[K,14,14,4,2],[LEAF,20,2 + (k % 2),1,8],[LEAF,21,2 + (k % 2),2,1],[LEAF,21,5 + (k % 2),2,1]]) },
+  { name: 'コウモリ', desc: 'パタパタ、ひらひら', seq: mob(8, 150, k => { const y = [0, -2, -1, 1][k % 4], up = k % 2;
+    return [[BAT,9,4 + y,6,6],[BAT,9,2 + y,2,2],[BAT,13,2 + y,2,2],[RED,10,6 + y,1,1],[RED,13,6 + y,1,1],
+      ...(up ? [[BAT,1,1 + y,8,3],[BAT,15,1 + y,8,3],[BAT,0,0 + y,2,2],[BAT,22,0 + y,2,2]] : [[BAT,1,6 + y,8,3],[BAT,15,6 + y,8,3],[BAT,0,8 + y,2,2],[BAT,22,8 + y,2,2]])]; }) },
+  { name: 'ゆきだるま', desc: 'ゆきの玉を、ぽいっ', seq: mob(8, 240, k => [[RICE,8,0,8,6],[K,9,2,2,2],[K,13,2,2,2],[CARROT,11,4,4,1],[RICE,6,6,12,10],[K,11,8,2,2],[K,11,12,2,2],[STICK,3,7 - (k % 2) * 2,3,1],[STICK,18,7,4,1],
+    ...(k > 3 ? [[RICE, 22 + (k - 4) * 2, 4 - (k - 4), 2, 2]] : []), ...flake(-3, -6 + k * 2)]) },
+  { name: 'ドラゴン', desc: 'つばさをひろげて、ガオー', seq: mob(8, 240, k => { const up = k % 2;
+    return [[DRAGON,5,5,12,6],[DRAGON,15,1,7,6],[K,19,3,1,1],[RED,22,4,2,1],[DRAGON,0,7,5,2],[DRAGON,-3,8,3,1],[DRAGON,7,11,2,3],[DRAGON,13,11,2,3],
+      ...(up ? [[DRAGON,6,-4,8,6],[PURPLE,7,-3,6,4]] : [[DRAGON,6,2,10,3],[PURPLE,7,3,8,1]]), ...(k > 5 ? [[FIRE1,25,3,3,2],[FIRE2,28,3,2,2]] : [])]; }) },
+  { name: 'ふわふわオバケ', desc: 'すーっと、ふわふわうかぶ', seq: mob(8, 240, k => { const y = [0, -1, -2, -3, -2, -1, 0, 1][k];
+    return [[RICE,6,y,12,12],[RICE,6,12 + y,3,2],[RICE,11,12 + y,3,2],[RICE,15,12 + y,3,2],[K,8,4 + y,2,3],[K,14,4 + y,2,3],[K,11,8 + y,2,2],[STEAM,18,2 + y,1,8]].concat(k > 5 ? [[RICE,4,6 + y,2,2],[RICE,18,6 + y,2,2]] : []); }) },
+  { name: '旅の商人', desc: '青いローブで、なにか売ってる', seq: mob(8, 280, k => [[ROBE,7,-3,10,3],[ROBE,5,0,14,1],[MG_SKIN,8,1,8,6],[K,9,3,2,1],[K,13,3,2,1],[K,11,5,2,1],[ROBE,6,7,12,9],[GOLD,6,10,12,1],
+    [MG_SKIN,4 + (k % 2),9,2,2],[BOX,0,10,5,4],[GEM,1,9,2,2],[GOLD,3,9,1,1], ...(k > 4 ? spark(2, 4) : [])]) },
+  { name: 'さかな', desc: 'ぴちぴち、ジャンプ', seq: mob(8, 180, k => { const y = [8, 4, 1, 0, 1, 4, 8, 10][k];
+    return [[FISH,6,y,10,5],[FISH,16,y + 1,3,3],[FISH,19,y,2,5],[K,8,y + 1,1,1],[RICE,10,y + 2,4,1],[WATER,2,14,20,2],...(k === 6 || k === 7 ? [[WATER,7,12,1,1],[WATER,16,11,1,1]] : [])]; }) },
+  { name: 'オウム', desc: 'まねっこして、おしゃべり', seq: mob(8, 220, k => [[PARROT,8,0,8,8],[GOLD,14,3,4,3],[K,10,2,2,2],[PARROT,6,8,10,6],[SPRINK,4,8 + (k % 2 ? -2 : 0),3,6],[SPRINK,16,8 + (k % 2 ? -2 : 0),3,6],[GOLD,9,14,2,2],[GOLD,13,14,2,2],
+    [STICK,2,16,20,1], ...(k % 4 < 2 ? note(20, -6 - (k % 2) * 2) : [])].map(([c,x,y,w,h]) => [c, x, y - (k % 4 === 0 ? 1 : 0), w, h])) },
+];
+// オレンジのキャラクターから、ぽんっと変身 → 生き物の動き（2回）→ ぽんっとオレンジにもどる
+MOBS.forEach(m => { const a = m.seq[0][0], z = m.seq[m.seq.length - 1][0];
+  m.seq = [[fig(), 500], [fig({ eyes: 'closed', extra: poof }), 250], [[...a, ...poof.slice(0, 3)], 200], ...m.seq, ...m.seq, [[...z, ...poof], 250]]; });
+
+window.CC_EXTRA = [...MOVES, ...SLEEPS, ...FOODS, ...FOODS2, ...FOODS3, ...WAYS, ...MOVES2, ...MOVES3, ...DRESSES, ...BLOCKS, ...MOBS];
+})();
+(function ccTyping() {
+  const svgs = Array.from(document.querySelectorAll('svg.cc-anim'));
+  if (!svgs.length) return;
+  // 各コマの絵：「色の記号 + x,y,幅,高さ をスペース区切り」を | でつないだもの
+  //   O=体のオレンジ  D=横を向いたときの影  G=ノートパソコン  K=目
+  const FRAMES = ["O4,0,16,2 4,2,2,2 8,2,8,2 18,2,2,2 0,4,24,4 4,8,16,4 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|K6,2,2,2 16,2,2,2","O4,1,16,2 0,3,20,2 0,5,16,1 18,5,2,2 0,6,6,1 9,6,7,1 4,7,19,3 4,10,18,1 4,11,16,2 4,13,2,3 8,13,2,3 14,13,2,3 18,13,2,3|K16,5,2,2 6,6,3,1","O4,1,16,2 0,3,20,2 0,5,16,1 18,5,2,2 0,6,6,1 9,6,7,1 4,7,16,1 4,8,19,3 4,11,18,1 4,12,16,1 4,13,2,3 8,13,2,3 14,13,2,3 18,13,2,3|K16,5,2,2 6,6,3,1","O4,0,16,2 4,2,2,2 8,2,8,2 18,2,6,2 4,4,20,1 0,5,24,1 0,6,23,1 0,7,22,1 0,8,20,1 4,9,16,3 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|G21,-3,2,1 21,-2,4,1 23,-1,5,1 25,0,3,1 21,1,7,1|K6,2,2,2 16,2,2,2","O20,-1,4,1 4,0,20,2 4,2,2,2 8,2,8,2 18,2,6,1 18,3,2,1 4,4,16,1 0,5,20,4 4,9,16,3 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|G26,-7,1,5 21,-2,6,1|K6,2,2,2 16,2,2,2","O4,0,16,3 4,3,2,1 8,3,8,2 18,3,2,2 0,4,6,1 0,5,22,1 0,6,23,1 0,7,22,1 4,8,18,1 4,9,20,3 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|G30,3,2,1 29,4,4,1 28,5,5,1 28,6,4,1 22,7,9,1 22,8,7,1|K6,3,2,2 16,3,2,2","O4,0,16,3 4,3,2,2 8,3,8,2 18,3,2,2 0,5,20,4 4,9,20,3 4,12,2,4 8,12,2,4 14,12,2,4 18,12,6,1 18,13,2,3|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 23,15,6,1|K6,3,2,2 16,3,2,2","O4,0,16,3 0,3,6,2 8,3,8,2 18,3,2,1 18,4,6,1 0,5,24,2 4,7,20,1 4,8,16,4 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|G32,12,2,1 30,13,2,1 28,14,2,1 23,15,6,1|K6,3,2,2 16,3,2,2","O8,-4,4,2 18,-4,4,2 7,-2,5,1 18,-2,5,1 7,-1,16,3 7,2,14,1 7,3,1,2 10,3,8,2 20,3,1,2 7,5,14,7 6,12,1,4 9,12,2,4 15,12,2,4 19,12,2,4|D5,-1,2,13 5,12,1,4|G32,9,1,1 31,10,2,1 30,11,2,1 29,12,2,1 28,13,2,1 23,14,6,1|K8,3,2,2 18,3,2,2","O10,1,12,3 23,3,2,1 10,4,2,3 14,4,6,3 23,4,3,2 24,6,2,1 10,7,12,3 25,7,1,1 10,10,16,2 10,12,2,2 16,12,2,2 20,12,6,2 9,14,3,1 15,14,3,1 19,14,7,1 9,15,2,1 15,15,2,1 19,15,2,1|D6,1,4,11 22,2,1,4 22,6,2,1 22,7,3,1 22,8,4,1 6,12,2,2 5,14,3,1 5,15,2,1|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 23,15,6,1|K12,4,2,3 20,4,2,3","O10,2,12,3 10,5,2,2 14,5,6,2 10,7,12,1 10,8,15,4 10,12,12,1 10,13,2,1 16,13,2,1 20,13,2,1 9,14,3,1 15,14,3,1 19,14,3,1 9,15,2,1 15,15,2,1 19,15,2,1|D6,2,4,11 25,9,1,3 22,12,4,1 6,13,2,1 5,14,3,1 5,15,2,1|G32,9,1,1 31,10,2,1 30,11,2,1 29,12,2,1 28,13,2,1 23,14,6,1|K12,5,2,2 20,5,2,2","O10,2,12,3 10,5,2,2 14,5,6,2 10,7,15,4 10,11,12,2 10,13,2,1 16,13,2,1 20,13,2,1 9,14,3,1 15,14,3,1 19,14,3,1 9,15,2,1 15,15,2,1 19,15,2,1|D6,2,4,11 22,12,4,3 6,13,2,1 5,14,3,1 5,15,2,1|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 23,15,6,1|K12,5,2,2 20,5,2,2","O10,2,12,3 10,5,2,2 14,5,6,2 10,7,12,2 10,9,15,4 10,13,2,1 16,13,2,1 20,13,5,1 9,14,3,1 15,14,3,1 19,14,3,1 9,15,2,1 15,15,2,1 19,15,2,1|D6,2,4,11 22,7,4,2 25,9,1,3 6,13,2,1 5,14,3,1 5,15,2,1|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 23,15,6,1|K12,5,2,2 20,5,2,2","O10,2,12,3 10,5,2,2 14,5,6,2 10,7,15,4 10,11,12,2 10,13,2,1 16,13,2,1 20,13,2,1 9,14,3,1 15,14,3,1 19,14,3,1 9,15,2,1 15,15,2,1 19,15,2,1 22,15,4,1|D6,2,4,11 22,12,4,3 6,13,2,1 5,14,3,1 5,15,2,1|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 26,15,3,1|K12,5,2,2 20,5,2,2","O10,2,12,3 10,5,2,2 14,5,6,2 10,7,12,2 10,9,15,3 10,12,16,1 10,13,2,1 16,13,2,1 20,13,6,1 9,14,3,1 15,14,3,1 19,14,7,1 9,15,2,1 15,15,2,1 19,15,2,1 22,15,4,1|D6,2,4,11 22,7,4,2 25,9,1,3 6,13,2,1 5,14,3,1 5,15,2,1|G32,10,1,1 31,11,2,1 30,12,2,1 29,13,2,1 28,14,2,1 26,15,3,1|K12,5,2,2 20,5,2,2","O9,1,12,3 22,3,2,1 9,4,2,3 13,4,6,3 22,4,3,2 23,6,2,1 9,7,12,2 24,7,1,1 9,9,14,1 9,10,16,2 10,12,2,2 16,12,2,2 19,12,7,1 20,13,6,1 9,14,3,1 15,14,3,1 19,14,7,1 9,15,2,1 15,15,2,1 19,15,2,1|D5,1,4,11 21,2,1,4 21,6,2,1 21,7,3,1 21,8,4,1 6,12,2,2 5,14,3,1 5,15,2,1|G31,6,1,1 30,7,2,1 29,8,2,1 28,9,2,1 27,10,2,1 25,11,3,1|K11,4,2,3 19,4,2,3","O6,0,14,3 6,3,2,1 10,3,8,2 2,5,5,4 8,5,14,1 8,6,15,1 8,7,16,1 8,8,18,2 6,10,15,1 6,11,14,1 8,12,2,4 14,12,2,4 18,12,2,4|D4,0,2,4 4,4,4,1 7,5,1,4 4,9,4,1 4,10,2,6|G22,5,2,1 23,6,2,1 24,7,3,1 26,8,2,2 21,10,7,1|K8,3,2,2 18,3,2,2","O4,1,16,2 0,3,20,2 0,5,6,2 8,5,8,2 18,5,2,2 4,7,16,1 4,8,19,3 4,11,18,1 4,12,16,1 4,13,2,3 8,13,2,3 14,13,2,3 18,13,2,3|K6,5,2,2 16,5,2,2","O4,1,16,2 0,3,20,2 0,5,6,2 8,5,8,2 18,5,2,2 4,7,16,1 4,8,18,4 4,12,16,1 4,13,2,3 8,13,2,3 14,13,2,3 18,13,2,3|K6,5,2,2 16,5,2,2","O4,0,16,2 4,2,2,2 8,2,8,2 18,2,2,2 4,4,16,1 0,5,24,4 4,9,16,3 4,12,2,4 8,12,2,4 14,12,2,4 18,12,2,4|K6,2,2,2 16,2,2,2"];
+  // [コマ番号, 長さ（1/30秒単位）] の順番（動画と同じ。最初の60＝2秒は正面で止まっている）
+  const SEQ = [[0,60],[1,3],[2,2],[1,3],[2,5],[3,2],[4,5],[5,3],[6,2],[7,2],[8,3],[9,3],[10,2],[11,3],[12,2],[10,3],[11,2],[12,3],[10,2],[11,3],[12,3],[10,2],[11,3],[12,2],[10,3],[11,2],[12,3],[10,2],[13,2],[14,3],[15,2],[16,3],[17,5],[18,3],[19,2],[0,29]];
+  const COLOR = { O: '#d97757', D: '#b46348', G: '#8a8a8a', K: '#1a1612' };
+  const svgOf = FRAMES.map(f => f.split('|').map(part => {
+    const fill = COLOR[part[0]];
+    return part.slice(1).split(' ').map(r => {
+      const [x, y, w, h] = r.split(',');
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
+    }).join('');
+  }).join(''));
+  const total = SEQ.reduce((s, q) => s + q[1], 0);
+  let shown = -1;
+  // 夜の0時〜朝7時は「おやすみ」：目をとじて、すうすう息をして、Zが浮かぶ（0.48秒ごとに8コマ）
+  const SLEEP0 = svgOf.length, rect = (x, y, w, h, c) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>';
+  const zee = (x, y) => rect(x, y, 3, 1, '#8fa3d6') + rect(x + 1, y + 1, 1, 1, '#8fa3d6') + rect(x, y + 2, 3, 1, '#8fa3d6');
+  for (let i = 0; i < 8; i++) {
+    const s = i % 2, k = i % 4, o = COLOR.O;
+    // 寝ているときは右に5マスずらして、体を下の「Claude Code」の文字の真ん中にそろえる（絵の幅34マスの真ん中＝17）
+    svgOf.push('<g transform="translate(5,0)">' + rect(4, s, 16, 12 - s, o) + rect(0, s + 4, 4, 4, o) + rect(20, s + 4, 4, 4, o) +
+      [4, 8, 14, 18].map(x => rect(x, 12, 2, 4, o)).join('') +
+      rect(6, s * 2 + 3, 2, 1, COLOR.K) + rect(16, s * 2 + 3, 2, 1, COLOR.K) +
+      zee(22, -1 - k) + (k >= 2 ? zee(26, -6 - (k - 2)) : '') + '</g>');
+  }
+  // 朝7時〜夜0時は、最初にパソコンを1回打ったあとは、01〜120・136〜175 の動きからずっとランダムに出す。動き（見本ページの番号）からランダムに1つを1回だけ入れる
+  //   入れる動きの絵は svgOf の X0 番から後ろに入れかえて使う
+  const TYPE_MS = total * 1000 / 30, EVERY = 1, X0 = svgOf.length;
+  let mv = null, typeOff = 0, nextAt = TYPE_MS * EVERY, done = 0, last = -1;
+  const RUN = Infinity;   // 最初にパソコンを1回打ったあとは、ずっとランダムな動きを続ける
+  // 一度出た動きは、ぜんぶ一周するまで出さない（混ぜた順番で1つずつ出す。一周したら、また混ぜなおす）
+  //   残りの順番はこの端末に覚えておくので、アプリを閉じて開き直しても続きから出る
+  let bag = [];
+  try { const b = JSON.parse(localStorage.getItem('ccMoveBag') || '[]'); if (Array.isArray(b) && b.every(i => Number.isInteger(i) && i >= 0 && i < window.CC_EXTRA.length)) bag = b; } catch (e) {}
+  function nextPick() {
+    if (!bag.length) {
+      bag = window.CC_EXTRA.map((_, i) => i);
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag.length > 1 && bag[bag.length - 1] === last) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];   // 一周のつなぎ目でも同じ動きを続けない
+    }
+    last = bag.pop();
+    try { localStorage.setItem('ccMoveBag', JSON.stringify(bag)); } catch (e) {}
+    return last;
+  }
+  function extraId(now) {
+    if (!window.CC_EXTRA) return -1;
+    if (!mv) {
+      if (now < nextAt) return -1;
+      const i = nextPick();   // 一周するまで同じ動きは出ない
+      const seq = window.CC_EXTRA[i].seq;
+      svgOf.length = X0;
+      seq.forEach(q => svgOf.push('<g transform="translate(5,0)">' + q[0].map(([c, x, y, w, h]) => rect(x, y, w, h, c)).join('') + '</g>'));
+      mv = { t0: now, seq, total: seq.reduce((s, q) => s + q[1], 0) };
+    }
+    let t = now - mv.t0;
+    if (t >= mv.total) {   // 1回おわったら、パソコンを打つ動きを最初から（また1回打ったら次の動き）
+      mv = null; done = (done + 1) % RUN;
+      if (done) { nextAt = now; return extraId(now); }   // 続けて次の動き
+      typeOff = Math.floor(now / (1000 / 30)); nextAt = now + TYPE_MS * EVERY; return -1;
+    }
+    for (let k = 0; k < mv.seq.length; k++) { if (t < mv.seq[k][1]) return X0 + k; t -= mv.seq[k][1]; }
+    return X0;
+  }
+  function draw(now) {
+    let t = (Math.floor(now / (1000 / 30)) - typeOff) % total, id = SEQ[0][0];
+    for (const [f, len] of SEQ) { if (t < len) { id = f; break; } t -= len; }
+    if (new Date().getHours() < 7 && !window.CC_AWAKE) id = SLEEP0 + Math.floor(now / 480) % 8;   // 夜はおやすみ
+    else { const x = extraId(now); if (x >= 0) id = x; }   // ときどき入る動き
+    if (id !== shown) { svgs.forEach(s => { s.innerHTML = svgOf[id]; }); shown = id; }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+// GitHub のマーク：タップするとくるっと1回転（そのあと GitHub のページが別のタブで開く）
+(function ghMascot() {
+  const gh = document.querySelector('.gh-mascot');
+  if (!gh) return;
+  gh.addEventListener('pointerdown', function() {
+    gh.classList.remove('spin'); void gh.offsetWidth; gh.classList.add('spin');
+  });
+  gh.addEventListener('animationend', function(e) {
+    if (e.animationName === 'gh-spin') gh.classList.remove('spin');
+  });
+})();
+
+document.body.addEventListener('touchstart',()=>getAC(),{once:true});
+</script>
+<script>
+// =============================================================
+// キャラクターの自己紹介（cc-intro）
+//   左上の Claude Code（オレンジ）と GitHub のマークをタップすると、それぞれが1文字ずつ「ピッ」と鳴らしながら自己紹介する。
+//   公式ページは自己紹介の画面の「公式ページを見る」から開く
+// =============================================================
+(function ccIntro() {
+  const APP = '郵便料金計算';
+  const INTRO = {
+    cc: {
+      name: 'Claude Code（クロード・コード）',
+      link: 'https://claude.com/claude-code',
+      text: 'やあ！ ぼくは Claude Code。\nAnthropic が作った AI だよ。\n話しかけるだけで アプリを\n作ったり 直したり できるんだ。\nこの' + APP + 'も\nいっしょに作ったよ！'
+    },
+    gh: {
+      name: 'GitHub（ギットハブ）',
+      link: 'https://github.com/aaiuioo-maker/yuupack-yuubin',
+      text: 'ぼくは GitHub の オクトキャット。\nプログラムを しまっておく\n大きな本だな だよ。\n' + APP + 'は ここに置いてあって\nスマホからも 開けるんだ。'
+    }
+  };
+  const overlay = document.getElementById('ccIntro');
+  const box = overlay && overlay.querySelector('.ccx-box');
+  if (!box) return;
+  const msg = box.querySelector('.ccx-msg');
+  let full = '', pos = 0, timer = null, ac = null;
+
+  // 効果音（このアプリの音とは別に、自己紹介だけで使う）
+  function tone(freq, dur, vol) {
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'square'; o.frequency.setValueAtTime(freq, ac.currentTime);
+      g.gain.setValueAtTime(vol, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+      o.start(); o.stop(ac.currentTime + dur + 0.02);
+    } catch (e) {}
+  }
+  const blip = () => tone(1100, 0.03, 0.045);
+
+  function open(who) {
+    const d = INTRO[who];
+    box.dataset.who = who;
+    box.querySelector('.ccx-name').textContent = d.name;
+    box.querySelector('.ccx-link').href = d.link;
+    full = d.text; pos = 0; msg.textContent = '';
+    overlay.classList.add('show');
+    tone(1200, 0.05, 0.04);
+    clearTimeout(timer); timer = setTimeout(type, 300);
+  }
+  function type() {
+    if (pos >= full.length) return;
+    pos++; msg.textContent = full.slice(0, pos);
+    const c = full.charAt(pos - 1);
+    if (c !== ' ' && c !== '\n' && c !== '…') blip();
+    timer = setTimeout(type, c === '\n' ? 300 : 45);
+  }
+  // 文字の途中でタップしたら、残りを一気に出す
+  msg.addEventListener('click', () => { clearTimeout(timer); pos = full.length; msg.textContent = full; });
+  function close() { clearTimeout(timer); overlay.classList.remove('show'); tone(440, 0.08, 0.04); }
+  box.querySelector('.ccx-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  document.querySelectorAll('.cc-mascot').forEach(el => {
+    if (el.closest('#ccIntro')) return;
+    el.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); open('cc'); });
+  });
+  // GitHub のマークは、くるっと1回転してから自己紹介
+  document.querySelectorAll('.gh-mascot').forEach(el => {
+    if (el.closest('#ccIntro')) return;
+    el.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); setTimeout(() => open('gh'), 450); });
+  });
+})();
+</script>
+
+<script>
+// =============================================================
+// 夜（0時〜朝7時）にオレンジのキャラクターをタップすると、自己紹介の画面に「おこす」ボタンが出る。
+//   押すと、アプリを閉じるまで起きて、ランダムな動きをする（閉じて開き直すと、また寝る）
+// =============================================================
+(function ccWake() {
+  window.CC_AWAKE = false;
+  const sleeping = () => new Date().getHours() < 7 && !window.CC_AWAKE;
+  const intro = document.getElementById('ccIntro');
+  if (intro) {
+    const box = intro.querySelector('.ccx-box'), btn = intro.querySelector('.ccx-wake');
+    if (!box || !btn) return;
+    const sync = () => { btn.hidden = !(intro.classList.contains('show') && box.dataset.who === 'cc' && sleeping()); };
+    new MutationObserver(sync).observe(intro, { attributes: true, subtree: true, attributeFilter: ['class', 'data-who'] });
+    btn.addEventListener('click', () => { window.CC_AWAKE = true; btn.hidden = true; intro.querySelector('.ccx-close').click(); });
+    return;
+  }
+  // 自己紹介の画面がないアプリ：寝ているときにタップすると、小さな「おこす」画面を出す
+  const a = document.querySelector('.cc-mascot');
+  if (!a) return;
+  const pop = document.createElement('div');
+  pop.id = 'ccWakePop'; pop.hidden = true;
+  pop.innerHTML = '<div class="ccw-box"><p>オレンジのキャラクターは、いま ねています… zzz</p>' +
+    '<div class="ccw-btns"><button type="button" class="ccw-wake">おこす</button><button type="button" class="ccw-close">とじる</button></div></div>';
+  document.body.appendChild(pop);
+  a.addEventListener('click', e => { if (!sleeping()) return; e.preventDefault(); pop.hidden = false; });
+  pop.querySelector('.ccw-wake').addEventListener('click', () => { window.CC_AWAKE = true; pop.hidden = true; });
+  pop.querySelector('.ccw-close').addEventListener('click', () => { pop.hidden = true; });
+  pop.addEventListener('click', e => { if (e.target === pop) pop.hidden = true; });
+})();
+</script>
+</body>
+</html>
