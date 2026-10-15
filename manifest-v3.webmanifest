@@ -1,6 +1,6 @@
 {
-  "name": "ゆうパック郵便",
-  "short_name": "ゆうパック郵便",
+  "name": "郵便料金",
+  "short_name": "郵便料金",
   "display": "standalone",
   "start_url": "./",
   "scope": "./",
